@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <title>StreamLife - Multi-Stream Radio Player</title>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-container-highest": "#353534",
+                        "on-secondary": "#2e3135",
+                        "primary-fixed-dim": "#b2c5ff",
+                        "surface-variant": "#353534",
+                        "tertiary-fixed-dim": "#c4c6cc",
+                        "on-tertiary-fixed": "#181c20",
+                        "on-background": "#e5e2e1",
+                        "outline-variant": "#424751",
+                        "surface": "#131313",
+                        "outline": "#8c909d",
+                        "on-tertiary": "#2d3135",
+                        "secondary-fixed": "#e1e2e7",
+                        "inverse-surface": "#e5e2e1",
+                        "surface-container-high": "#2a2a2a",
+                        "on-secondary-fixed": "#191c20",
+                        "on-primary-container": "#a6bcff",
+                        "inverse-on-surface": "#313030",
+                        "surface-container-low": "#1c1b1b",
+                        "on-secondary-container": "#b6b8bd",
+                        "surface-dim": "#131313",
+                        "on-tertiary-fixed-variant": "#44474b",
+                        "on-error": "#690005",
+                        "surface-container": "#201f1f",
+                        "secondary-fixed-dim": "#c4c6cb",
+                        "secondary": "#c4c6cb",
+                        "tertiary-container": "#4a4d52",
+                        "surface-tint": "#b2c5ff",
+                        "tertiary-fixed": "#e0e2e8",
+                        "primary-container": "#0045b0",
+                        "on-surface-variant": "#c2c6d3",
+                        "tertiary": "#c4c6cc",
+                        "on-error-container": "#ffdad6",
+                        "secondary-container": "#46494d",
+                        "on-surface": "#e5e2e1",
+                        "error": "#ffb4ab",
+                        "on-primary-fixed-variant": "#003fa3",
+                        "on-secondary-fixed-variant": "#44474b",
+                        "primary-fixed": "#dae2ff",
+                        "background": "#131313",
+                        "error-container": "#93000a",
+                        "on-primary": "#002b74",
+                        "surface-container-lowest": "#0e0e0e",
+                        "inverse-primary": "#0055d4",
+                        "primary": "#b2c5ff",
+                        "surface-bright": "#393939",
+                        "on-primary-fixed": "#001848",
+                        "on-tertiary-container": "#bbbec3"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #131313;
+            color: #e5e2e1;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+        .glass-panel {
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+        }
+        .text-gradient {
+            background: linear-gradient(135deg, #b2c5ff 0%, #0045b0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .sidebar-active {
+            box-shadow: inset -4px 0 0 0 #b2c5ff;
+        }
+        .stream-card {
+            transition: all 0.3s ease;
+        }
+        .stream-card.active {
+            box-shadow: 0 0 20px rgba(178, 197, 255, 0.3);
+        }
+        .progress-bar {
+            background: linear-gradient(90deg, #b2c5ff 0%, #0045b0 100%);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface selection:bg-primary-container/30">
+
+<!-- Sidebar Navigation -->
+<aside class="hidden md:flex flex-col h-full w-64 fixed left-0 top-0 bg-neutral-900/40 dark:bg-[#1c1b1b] shadow-2xl shadow-black/40 py-8 px-4 z-40">
+    <div class="mb-12 px-2">
+        <span class="text-2xl font-black tracking-tighter text-[#b2c5ff]">StreamLife</span>
+        <p class="text-[10px] uppercase tracking-widest text-neutral-500 mt-1">Multi-Stream Radio</p>
+    </div>
+    <nav class="space-y-6 flex-1">
+        <div class="space-y-1">
+            <a class="flex items-center gap-4 px-4 py-3 rounded-xl text-[#b2c5ff] font-bold border-r-4 border-[#b2c5ff] bg-neutral-800/50 transition-all scale-98 active:opacity-80" href="#streams">
+                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">home</span>
+                <span class="font-body text-sm">Streams</span>
+            </a>
+            <a class="flex items-center gap-4 px-4 py-3 rounded-xl text-neutral-400 dark:text-neutral-500 hover:bg-neutral-800/50 dark:hover:bg-[#2a2a2a] transition-all scale-98 active:opacity-80" href="#library">
+                <span class="material-symbols-outlined">library_music</span>
+                <span class="font-body text-sm">Library</span>
+            </a>
+            <a class="flex items-center gap-4 px-4 py-3 rounded-xl text-neutral-400 dark:text-neutral-500 hover:bg-neutral-800/50 dark:hover:bg-[#2a2a2a] transition-all scale-98 active:opacity-80" href="#favorites">
+                <span class="material-symbols-outlined">favorite</span>
+                <span class="font-body text-sm">Favorites</span>
+            </a>
+        </div>
+    </nav>
+    <div class="mt-auto px-2">
+        <div class="bg-primary-container p-4 rounded-2xl relative overflow-hidden group cursor-pointer transition-transform hover:scale-[1.02]">
+            <div class="relative z-10">
+                <p class="text-xs font-bold text-on-primary-container mb-1 opacity-80">Stream Manager</p>
+                <h4 class="font-headline font-extrabold text-white mb-3">Settings</h4>
+                <span class="bg-white text-primary-container px-3 py-1 rounded-full text-[10px] font-bold">CONFIGURE</span>
+            </div>
+            <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
+        </div>
+    </div>
+</aside>
+
+<!-- Main Content -->
+<main class="md:ml-64 pb-40 min-h-screen">
+    <!-- Header Section with Search -->
+    <header class="flex items-center justify-between p-8">
+        <div class="flex items-center gap-4 bg-surface-container-high/40 px-6 py-3 rounded-full w-full max-w-xl glass-panel">
+            <span class="material-symbols-outlined text-outline">search</span>
+            <input class="bg-transparent border-none focus:ring-0 text-sm w-full placeholder:text-neutral-500" placeholder="Search streams, stations..." type="text"/>
+        </div>
+        <div class="flex items-center gap-4">
+            <button class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center hover:bg-surface-bright transition-colors">
+                <span class="material-symbols-outlined text-on-surface">notifications</span>
+            </button>
+            <div class="flex items-center gap-3 bg-surface-container-high px-4 py-2 rounded-full">
+                <div class="w-8 h-8 rounded-full border border-outline-variant/30 bg-primary/30 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-sm">account_circle</span>
+                </div>
+                <span class="text-sm font-semibold pr-2">User</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <div class="px-8 grid grid-cols-12 gap-8">
+        <!-- Left: Active Streams -->
+        <div class="col-span-12 lg:col-span-8 space-y-10">
+            <!-- Current Playing Stream Hero -->
+            <section id="current-stream" class="relative h-[380px] rounded-[2.5rem] overflow-hidden group">
+                <div class="absolute inset-0 w-full h-full bg-gradient-to-br from-primary/40 via-primary-container/30 to-background"></div>
+                <div class="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent"></div>
+                <div class="absolute bottom-12 left-12 right-12 flex flex-col items-start">
+                    <div class="flex items-center gap-2 mb-4 bg-primary/20 backdrop-blur-md px-3 py-1 rounded-full">
+                        <span class="material-symbols-outlined text-[14px] text-primary" style="font-variation-settings: 'FILL' 1;">radio</span>
+                        <span class="text-[10px] font-bold text-primary tracking-widest uppercase">Now Playing</span>
+                    </div>
+                    <h1 class="font-headline text-6xl font-black mb-2 tracking-tight" id="current-stream-name">Select a Stream</h1>
+                    <p class="text-on-surface-variant font-medium text-lg mb-8 max-w-lg" id="current-stream-desc">Add and manage multiple audio streams</p>
+                    <div class="flex items-center gap-4">
+                        <button onclick="togglePlayback()" class="bg-primary text-on-primary px-8 py-4 rounded-xl font-bold flex items-center gap-2 hover:scale-105 transition-transform">
+                            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;" id="play-btn-icon">play_arrow</span>
+                            <span id="play-btn-text">Play</span>
+                        </button>
+                        <button class="bg-white/10 backdrop-blur-xl text-white px-8 py-4 rounded-xl font-bold flex items-center gap-2 hover:bg-white/20 transition-all">
+                            Add Stream
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Active Streams List -->
+            <section>
+                <div class="flex items-center justify-between mb-8">
+                    <h2 class="font-headline text-2xl font-bold">Your Streams</h2>
+                    <button onclick="openAddStreamModal()" class="text-primary text-sm font-bold hover:underline flex items-center gap-2">
+                        <span class="material-symbols-outlined">add</span>
+                        Add Stream
+                    </button>
+                </div>
+                <div class="space-y-4" id="streams-list">
+                    <div class="flex items-center justify-center py-12 text-on-surface-variant">
+                        <div class="text-center">
+                            <span class="material-symbols-outlined text-4xl mb-4 block">radio</span>
+                            <p>No streams added yet. Add one to get started!</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Right Sidebar: Stream Manager & Info -->
+        <div class="col-span-12 lg:col-span-4 space-y-10">
+            <!-- Active Now -->
+            <section class="bg-surface-container-low/50 rounded-[2rem] p-8 glass-panel">
+                <h3 class="font-headline text-xl font-bold mb-6">Active Streams</h3>
+                <div class="space-y-6" id="active-streams-panel">
+                    <div class="flex items-center justify-center py-8 text-on-surface-variant">
+                        <p class="text-sm">No streams playing</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Stream Controls -->
+            <section class="bg-primary/5 rounded-[2rem] p-8 border border-primary/10">
+                <h3 class="font-headline text-lg font-bold mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">volume_up</span>
+                    Volume Control
+                </h3>
+                <div class="space-y-6">
+                    <div id="volume-sliders">
+                        <div class="text-sm text-on-surface-variant">
+                            Add streams to control volume per stream
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+</main>
+
+<!-- Floating Player Bar -->
+<div class="fixed bottom-8 left-1/2 -translate-x-1/2 w-[92%] max-w-6xl z-50 flex items-center justify-between bg-neutral-900/50 dark:bg-[#2a2a2a]/50 backdrop-blur-3xl rounded-full px-8 py-4 shadow-[0_20px_40px_rgba(0,0,0,0.6)]">
+    <!-- Now Playing Info -->
+    <div class="flex items-center gap-4 w-1/3">
+        <div class="w-14 h-14 rounded-xl shadow-lg border border-white/5 bg-gradient-to-br from-primary/40 to-primary-container/40 flex items-center justify-center">
+            <span class="material-symbols-outlined text-2xl text-primary">radio</span>
+        </div>
+        <div class="hidden sm:block">
+            <h4 class="font-headline text-sm font-bold truncate" id="player-stream-name">No Stream</h4>
+            <p class="font-body text-[10px] text-neutral-300" id="player-stream-status">Waiting...</p>
+        </div>
+    </div>
+
+    <!-- Main Controls -->
+    <div class="flex flex-col items-center gap-2 flex-1 max-w-md">
+        <div class="flex items-center gap-8">
+            <button class="material-symbols-outlined text-neutral-400 hover:text-white transition-colors">shuffle</button>
+            <button class="material-symbols-outlined text-2xl text-white hover:scale-110 transition-transform">skip_previous</button>
+            <button onclick="togglePlayback()" class="w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-lg shadow-primary/20">
+                <span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;" id="player-play-icon">play_arrow</span>
+            </button>
+            <button class="material-symbols-outlined text-2xl text-white hover:scale-110 transition-transform">skip_next</button>
+            <button class="material-symbols-outlined text-neutral-400 hover:text-white transition-colors">repeat</button>
+        </div>
+        <div class="w-full flex items-center gap-3">
+            <span class="text-[10px] font-medium text-neutral-400 w-10 text-right" id="time-current">0:00</span>
+            <div class="h-1 flex-1 bg-secondary-container rounded-full relative overflow-hidden group cursor-pointer">
+                <div class="progress-bar h-full rounded-full" id="progress-fill" style="width: 0%"></div>
+                <div class="absolute left-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity" id="progress-thumb"></div>
+            </div>
+            <span class="text-[10px] font-medium text-neutral-400 w-10" id="time-total">0:00</span>
+        </div>
+    </div>
+
+    <!-- Secondary Controls -->
+    <div class="flex items-center justify-end gap-4 w-1/3">
+        <button class="material-symbols-outlined text-neutral-400 hover:text-white transition-colors">lyrics</button>
+        <button class="material-symbols-outlined text-neutral-400 hover:text-white transition-colors">queue_music</button>
+        <div class="flex items-center gap-2">
+            <button class="material-symbols-outlined text-neutral-400">volume_up</button>
+            <div class="w-24 h-1 bg-secondary-container rounded-full overflow-hidden">
+                <div class="h-full progress-bar w-[80%]"></div>
+            </div>
+        </div>
+        <button class="material-symbols-outlined text-neutral-400 hover:text-white transition-colors">fullscreen</button>
+    </div>
+</div>
+
+<!-- Add Stream Modal -->
+<div id="add-stream-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+    <div class="bg-surface-container-high rounded-[2rem] p-8 w-full max-w-md shadow-2xl shadow-black/40">
+        <h2 class="font-headline text-2xl font-bold mb-6">Add Stream</h2>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium mb-2">Stream Name</label>
+                <input type="text" id="stream-name" placeholder="e.g., France Musique" class="w-full bg-surface-container px-4 py-3 rounded-xl text-on-surface border border-outline-variant/30 focus:border-primary focus:ring-0"/>
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-2">Stream URL</label>
+                <input type="url" id="stream-url" placeholder="https://..." class="w-full bg-surface-container px-4 py-3 rounded-xl text-on-surface border border-outline-variant/30 focus:border-primary focus:ring-0"/>
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-2">Genre (Optional)</label>
+                <input type="text" id="stream-genre" placeholder="Jazz, Classical..." class="w-full bg-surface-container px-4 py-3 rounded-xl text-on-surface border border-outline-variant/30 focus:border-primary focus:ring-0"/>
+            </div>
+        </div>
+        <div class="flex gap-4 mt-8">
+            <button onclick="closeAddStreamModal()" class="flex-1 px-4 py-3 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-bold transition-colors">
+                Cancel
+            </button>
+            <button onclick="addStream()" class="flex-1 px-4 py-3 rounded-xl bg-primary text-on-primary font-bold hover:scale-105 transition-all">
+                Add Stream
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let streams = [];
+    let currentStreamIndex = -1;
+    let isPlaying = false;
+    let currentMetadata = {};
+    let metadataUpdateInterval = null;
+    const audioElements = {};
+
+    // Load streams from JSON
+    async function loadStreamsFromJSON() {
+        try {
+            const response = await fetch('streams.json');
+            const data = await response.json();
+            streams = data.streams;
+            renderStreams();
+            // Select first stream by default
+            if (streams.length > 0) {
+                selectStream(0);
+            }
+        } catch (error) {
+            console.error('Error loading streams:', error);
+            // Fallback to default streams
+            loadDefaultStreams();
+        }
+    }
+
+    function loadDefaultStreams() {
+        streams = [
+            {
+                id: 'europe2_new',
+                name: 'Europe 2 New',
+                url: 'https://wr.lmn.fm/vr-wr1.mp3',
+                metadataUrl: 'https://direct-radio.rfm.fr/playout?radio=2001',
+                genre: 'Pop & Hits',
+                icon: 'new_releases'
+            }
+        ];
+        renderStreams();
+    }
+
+    // Fetch metadata from the API
+    async function fetchMetadata(stream) {
+        try {
+            const response = await fetch(stream.metadataUrl);
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Error fetching metadata:', error);
+            return null;
+        }
+    }
+
+    // Update metadata for current playing stream
+    async function updateCurrentMetadata() {
+        if (currentStreamIndex === -1 || !isPlaying) return;
+
+        const stream = streams[currentStreamIndex];
+        const metadata = await fetchMetadata(stream);
+
+        if (metadata && metadata.current_song) {
+            currentMetadata = metadata.current_song;
+            document.getElementById('player-stream-status').textContent =
+                `${metadata.current_song.title || 'Unknown'} - ${metadata.current_song.artist || 'Unknown Artist'}`;
+        }
+    }
+
+    function renderStreams() {
+        const streamsList = document.getElementById('streams-list');
+
+        if (streams.length === 0) {
+            streamsList.innerHTML = `
+                <div class="flex items-center justify-center py-12 text-on-surface-variant">
+                    <div class="text-center">
+                        <span class="material-symbols-outlined text-4xl mb-4 block">radio</span>
+                        <p>No streams available</p>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        streamsList.innerHTML = streams.map((stream, idx) => `
+            <div class="stream-card group flex items-center gap-6 p-6 rounded-2xl bg-surface-container-low/50 hover:bg-surface-bright/20 transition-all cursor-pointer border border-outline-variant/20 ${currentStreamIndex === idx ? 'active' : ''}">
+                <div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <span class="material-symbols-outlined text-primary">${stream.icon || 'radio'}</span>
+                </div>
+                <div class="flex-1" onclick="selectStream(${idx})">
+                    <h4 class="font-bold text-base">${stream.name}</h4>
+                    <p class="text-sm text-outline">${stream.genre || 'Audio Stream'}</p>
+                </div>
+                <div class="flex items-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onclick="playStream(${idx})" class="material-symbols-outlined text-primary hover:scale-110 transition-transform" style="font-variation-settings: 'FILL' 1;">play_circle</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function selectStream(idx) {
+        currentStreamIndex = idx;
+        const stream = streams[idx];
+        document.getElementById('current-stream-name').textContent = stream.name;
+        document.getElementById('current-stream-desc').textContent = stream.genre || 'Audio Stream';
+        document.getElementById('player-stream-name').textContent = stream.name;
+        document.getElementById('player-stream-status').textContent = stream.genre || 'Ready';
+        renderStreams();
+        renderActiveSteams();
+    }
+
+    function playStream(idx) {
+        selectStream(idx);
+        togglePlayback();
+    }
+
+    function togglePlayback() {
+        if (currentStreamIndex === -1) {
+            alert('Please select a stream first');
+            return;
+        }
+
+        isPlaying = !isPlaying;
+        const stream = streams[currentStreamIndex];
+
+        document.getElementById('play-btn-icon').textContent = isPlaying ? 'pause' : 'play_arrow';
+        document.getElementById('play-btn-text').textContent = isPlaying ? 'Pause' : 'Play';
+        document.getElementById('player-play-icon').textContent = isPlaying ? 'pause' : 'play_arrow';
+
+        if (isPlaying) {
+            console.log(`Playing stream: ${stream.name} - ${stream.url}`);
+            document.getElementById('player-stream-status').textContent = 'Loading metadata...';
+
+            // Start updating metadata
+            updateCurrentMetadata();
+            metadataUpdateInterval = setInterval(updateCurrentMetadata, 30000); // Update every 30 seconds
+        } else {
+            document.getElementById('player-stream-status').textContent = 'Paused';
+            if (metadataUpdateInterval) {
+                clearInterval(metadataUpdateInterval);
+            }
+        }
+    }
+
+    function openAddStreamModal() {
+        document.getElementById('add-stream-modal').classList.remove('hidden');
+    }
+
+    function closeAddStreamModal() {
+        document.getElementById('add-stream-modal').classList.add('hidden');
+        document.getElementById('stream-name').value = '';
+        document.getElementById('stream-url').value = '';
+        document.getElementById('stream-genre').value = '';
+    }
+
+    function addStream() {
+        const name = document.getElementById('stream-name').value;
+        const url = document.getElementById('stream-url').value;
+        const genre = document.getElementById('stream-genre').value;
+
+        if (!name || !url) {
+            alert('Please fill in stream name and URL');
+            return;
+        }
+
+        streams.push({
+            id: 'stream_' + Date.now(),
+            name,
+            url,
+            metadataUrl: '',
+            genre,
+            icon: 'radio'
+        });
+
+        closeAddStreamModal();
+        renderStreams();
+    }
+
+    function renderActiveSteams() {
+        const panel = document.getElementById('active-streams-panel');
+
+        if (currentStreamIndex === -1) {
+            panel.innerHTML = '<div class="text-sm text-on-surface-variant">No streams playing</div>';
+            return;
+        }
+
+        const stream = streams[currentStreamIndex];
+        panel.innerHTML = `
+            <div class="flex items-center gap-4 p-4 bg-primary/10 rounded-xl border border-primary/20">
+                <div class="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
+                    <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">radio</span>
+                </div>
+                <div class="flex-1">
+                    <h4 class="font-bold text-sm">${stream.name}</h4>
+                    <p class="text-xs text-on-surface-variant">${stream.genre || 'Audio Stream'}</p>
+                </div>
+                <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+            </div>
+        `;
+    }
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', loadStreamsFromJSON);
+</script>
+</body>
+</html>

@@ -1,0 +1,244 @@
+{
+  "streams": [
+    {
+      "id": "europe2_new",
+      "name": "Europe 2 New",
+      "url": "https://wr.lmn.fm/vr-wr1.mp3",
+      "metadataUrl": "https://direct-radio.rfm.fr/playout?radio=2001",
+      "genre": "Pop & Hits",
+      "icon": "new_releases"
+    },
+    {
+      "id": "europe2_classics",
+      "name": "Europe 2 Classics",
+      "url": "https://wr.lmn.fm/vr-wr2.mp3",
+      "metadataUrl": "https://direct-radio.rfm.fr/playout?radio=2002",
+      "genre": "Classics",
+      "icon": "library_music"
+    },
+    {
+      "id": "europe2_acoustic",
+      "name": "Europe 2 Acoustic",
+      "url": "https://wr.lmn.fm/vr-wr3.mp3",
+      "metadataUrl": "https://direct-radio.rfm.fr/playout?radio=2003",
+      "genre": "Acoustic",
+      "icon": "music_note"
+    },
+    {
+      "id": "europe2_hits",
+      "name": "Europe 2 Hits",
+      "url": "https://wr.lmn.fm/vr-wr4.mp3",
+      "metadataUrl": "https://direct-radio.rfm.fr/playout?radio=2004",
+      "genre": "Hits",
+      "icon": "star"
+    },
+    {
+      "id": "europe2_rock",
+      "name": "Europe 2 Rock",
+      "url": "https://wr.lmn.fm/vr-wr5.mp3",
+      "metadataUrl": "https://direct-radio.rfm.fr/playout?radio=2005",
+      "genre": "Rock",
+      "icon": "electric_bolt"
+    },
+    {
+      "id": "europe2_mix",
+      "name": "Europe 2 Mix",
+      "url": "https://wr.lmn.fm/vr-wr6.mp3",
+      "metadataUrl": "https://direct-radio.rfm.fr/playout?radio=2006",
+      "genre": "Mix",
+      "icon": "shuffle"
+    },
+    {
+      "id": "europe2_live",
+      "name": "Europe 2 Live",
+      "url": "https://wr.lmn.fm/vr-wr7.mp3",
+      "metadataUrl": "https://direct-radio.rfm.fr/playout?radio=2007",
+      "genre": "Live",
+      "icon": "live_tv"
+    },
+    {
+      "id": "europe2_nouvelle_scene",
+      "name": "Europe 2 Nouvelle Scène",
+      "url": "https://wr.lmn.fm/vr-wr8.mp3",
+      "metadataUrl": "https://direct-radio.rfm.fr/playout?radio=2008",
+      "genre": "New Music",
+      "icon": "trending_up"
+    },
+    {
+      "id": "europe2_100_francais",
+      "name": "Europe 2 100% Français",
+      "url": "https://wr.lmn.fm/vr-wr9.mp3",
+      "metadataUrl": "https://direct-radio.rfm.fr/playout?radio=2009",
+      "genre": "French",
+      "icon": "language"
+    },
+    {
+      "id": "europe2_slow",
+      "name": "Europe 2 Slow",
+      "url": "https://wr.lmn.fm/vr-wr10.mp3",
+      "metadataUrl": "https://direct-radio.rfm.fr/playout?radio=2010",
+      "genre": "Slow",
+      "icon": "favorite"
+    },
+    {
+      "id": "europe2_cardio",
+      "name": "Europe 2 Cardio",
+      "url": "https://wr.lmn.fm/vr-wr11.mp3",
+      "metadataUrl": "https://direct-radio.rfm.fr/playout?radio=2011",
+      "genre": "Fitness",
+      "icon": "favorite"
+    },
+    {
+      "id": "europe2_90s",
+      "name": "Europe 2 90's",
+      "url": "https://wr.lmn.fm/vr-wr12.mp3",
+      "metadataUrl": "https://direct-radio.rfm.fr/playout?radio=2012",
+      "genre": "90's",
+      "icon": "history"
+    },
+    {
+      "id": "europe2_millenium",
+      "name": "Europe 2 Millenium",
+      "url": "https://wr.lmn.fm/vr-wr13.mp3",
+      "metadataUrl": "https://direct-radio.rfm.fr/playout?radio=2013",
+      "genre": "2000's",
+      "icon": "history"
+    },
+    {
+      "id": "europe2_girl_power",
+      "name": "Europe 2 Girl Power",
+      "url": "https://wr.lmn.fm/vr-wr14.mp3",
+      "metadataUrl": "https://direct-radio.rfm.fr/playout?radio=2014",
+      "genre": "Pop",
+      "icon": "star"
+    },
+    {
+      "id": "europe2_pop_rock",
+      "name": "Europe 2 Pop Rock",
+      "url": "https://wr.lmn.fm/vr-wr15.mp3",
+      "metadataUrl": "https://direct-radio.rfm.fr/playout?radio=2015",
+      "genre": "Pop Rock",
+      "icon": "electric_bolt"
+    },
+    {
+      "id": "europe2_french_touch",
+      "name": "Europe 2 French Touch",
+      "url": "https://wr.lmn.fm/vr-wr16.mp3",
+      "metadataUrl": "https://direct-radio.rfm.fr/playout?radio=2016",
+      "genre": "Electronic",
+      "icon": "music_note"
+    },
+    {
+      "id": "europe2_love",
+      "name": "Europe 2 Love",
+      "url": "https://wr.lmn.fm/vr-wr17.mp3",
+      "metadataUrl": "https://direct-radio.rfm.fr/playout?radio=2017",
+      "genre": "Love",
+      "icon": "favorite"
+    },
+    {
+      "id": "europe2_pop_2010",
+      "name": "Europe 2 Pop 2010",
+      "url": "https://wr.lmn.fm/vr-wr18.mp3",
+      "metadataUrl": "https://direct-radio.rfm.fr/playout?radio=2018",
+      "genre": "2010's",
+      "icon": "history"
+    },
+    {
+      "id": "europe2_dance",
+      "name": "Europe 2 Dance",
+      "url": "https://wr.lmn.fm/vr-wr19.mp3",
+      "metadataUrl": "https://direct-radio.rfm.fr/playout?radio=2019",
+      "genre": "Dance",
+      "icon": "music_note"
+    },
+    {
+      "id": "europe2_cine",
+      "name": "Europe 2 Ciné",
+      "url": "https://wr.lmn.fm/vr-wr20.mp3",
+      "metadataUrl": "https://direct-radio.rfm.fr/playout?radio=2020",
+      "genre": "Soundtracks",
+      "icon": "movie"
+    },
+    {
+      "id": "europe2_pop_2020",
+      "name": "Europe 2 Pop 2020",
+      "url": "https://wr.lmn.fm/vr-wr21.mp3",
+      "metadataUrl": "https://direct-radio.rfm.fr/playout?radio=2021",
+      "genre": "2020's",
+      "icon": "new_releases"
+    },
+    {
+      "id": "running",
+      "name": "Running",
+      "url": "https://wr.lmn.fm/vr-wr22.mp3",
+      "metadataUrl": "https://direct-radio.rfm.fr/playout?radio=2022",
+      "genre": "Fitness",
+      "icon": "directions_run"
+    },
+    {
+      "id": "duos",
+      "name": "Duos",
+      "url": "https://wr.lmn.fm/vr-wr23.mp3",
+      "metadataUrl": "https://direct-radio.rfm.fr/playout?radio=2023",
+      "genre": "Collaborations",
+      "icon": "group"
+    },
+    {
+      "id": "soul_rnb",
+      "name": "Soul / R'n'B",
+      "url": "https://wr.lmn.fm/vr-wr24.mp3",
+      "metadataUrl": "https://direct-radio.rfm.fr/playout?radio=2024",
+      "genre": "Soul",
+      "icon": "music_note"
+    },
+    {
+      "id": "home",
+      "name": "Home",
+      "url": "https://wr.lmn.fm/vr-wr25.mp3",
+      "metadataUrl": "https://direct-radio.rfm.fr/playout?radio=2025",
+      "genre": "Ambient",
+      "icon": "home"
+    },
+    {
+      "id": "work",
+      "name": "Work",
+      "url": "https://wr.lmn.fm/vr-wr26.mp3",
+      "metadataUrl": "https://direct-radio.rfm.fr/playout?radio=2026",
+      "genre": "Focus",
+      "icon": "work"
+    },
+    {
+      "id": "zen",
+      "name": "Zen",
+      "url": "https://wr.lmn.fm/vr-wr27.mp3",
+      "metadataUrl": "https://direct-radio.rfm.fr/playout?radio=2027",
+      "genre": "Meditation",
+      "icon": "self_care"
+    },
+    {
+      "id": "stream_28",
+      "name": "Stream 28",
+      "url": "https://wr.lmn.fm/vr-wr28.mp3",
+      "metadataUrl": "https://direct-radio.rfm.fr/playout?radio=2028",
+      "genre": "Mixed",
+      "icon": "radio"
+    },
+    {
+      "id": "stream_29",
+      "name": "Stream 29",
+      "url": "https://wr.lmn.fm/vr-wr29.mp3",
+      "metadataUrl": "https://direct-radio.rfm.fr/playout?radio=2029",
+      "genre": "Mixed",
+      "icon": "radio"
+    },
+    {
+      "id": "stream_30",
+      "name": "Stream 30",
+      "url": "https://wr.lmn.fm/vr-wr30.mp3",
+      "metadataUrl": "https://direct-radio.rfm.fr/playout?radio=2030",
+      "genre": "Mixed",
+      "icon": "radio"
+    }
+  ]
+}
