@@ -1,0 +1,244 @@
+{
+  "streams": [
+    {
+      "id": "soma_fm_groove",
+      "name": "SomaFM - Groove Salad",
+      "url": "https://stream.somafm.com/groovesalad128.m3u8",
+      "metadataUrl": "https://somafm.com/groovesalad/",
+      "genre": "Downtempo/Electronic",
+      "icon": "favorite"
+    },
+    {
+      "id": "soma_fm_synthwave",
+      "name": "SomaFM - Synthwave",
+      "url": "https://stream.somafm.com/synthwave128.m3u8",
+      "metadataUrl": "https://somafm.com/synthwave/",
+      "genre": "Electronic/Synthwave",
+      "icon": "electric_bolt"
+    },
+    {
+      "id": "soma_fm_indie",
+      "name": "SomaFM - Indie Pop Rocks",
+      "url": "https://stream.somafm.com/indiepoprocks128.m3u8",
+      "metadataUrl": "https://somafm.com/indiepopracks/",
+      "genre": "Indie/Pop",
+      "icon": "music_note"
+    },
+    {
+      "id": "soma_fm_deep",
+      "name": "SomaFM - Deep Space One",
+      "url": "https://stream.somafm.com/deepspaceone128.m3u8",
+      "metadataUrl": "https://somafm.com/deepspaceone/",
+      "genre": "Ambient/Space",
+      "icon": "public"
+    },
+    {
+      "id": "soma_fm_folk",
+      "name": "SomaFM - Folkfwd",
+      "url": "https://stream.somafm.com/folkfwd128.m3u8",
+      "metadataUrl": "https://somafm.com/folkfwd/",
+      "genre": "Folk/Acoustic",
+      "icon": "music_note"
+    },
+    {
+      "id": "soma_fm_metal",
+      "name": "SomaFM - Metal Detector",
+      "url": "https://stream.somafm.com/metal128.m3u8",
+      "metadataUrl": "https://somafm.com/metal/",
+      "genre": "Metal/Rock",
+      "icon": "electric_bolt"
+    },
+    {
+      "id": "soma_fm_jazz",
+      "name": "SomaFM - Jazz 25",
+      "url": "https://stream.somafm.com/jazz25_128.m3u8",
+      "metadataUrl": "https://somafm.com/jazz25/",
+      "genre": "Jazz",
+      "icon": "library_music"
+    },
+    {
+      "id": "soma_fm_ambient",
+      "name": "SomaFM - Ambient",
+      "url": "https://stream.somafm.com/ambient128.m3u8",
+      "metadataUrl": "https://somafm.com/ambient/",
+      "genre": "Ambient",
+      "icon": "self_care"
+    },
+    {
+      "id": "soma_fm_mission",
+      "name": "SomaFM - Mission Control",
+      "url": "https://stream.somafm.com/missioncontrol128.m3u8",
+      "metadataUrl": "https://somafm.com/missioncontrol/",
+      "genre": "Ambient/Space",
+      "icon": "public"
+    },
+    {
+      "id": "soma_fm_liquid",
+      "name": "SomaFM - Liquid Metal",
+      "url": "https://stream.somafm.com/liquidmetal128.m3u8",
+      "metadataUrl": "https://somafm.com/liquidmetal/",
+      "genre": "Liquid Funk",
+      "icon": "favorite"
+    },
+    {
+      "id": "soma_fm_space",
+      "name": "SomaFM - Space Station Soma",
+      "url": "https://stream.somafm.com/spacestation128.m3u8",
+      "metadataUrl": "https://somafm.com/spacestation/",
+      "genre": "Electronic",
+      "icon": "public"
+    },
+    {
+      "id": "soma_fm_cliq",
+      "name": "SomaFM - cliqhop",
+      "url": "https://stream.somafm.com/cliqhop128.m3u8",
+      "metadataUrl": "https://somafm.com/cliqhop/",
+      "genre": "Chillhop",
+      "icon": "music_note"
+    },
+    {
+      "id": "soma_fm_poptron",
+      "name": "SomaFM - PopTron",
+      "url": "https://stream.somafm.com/poptron128.m3u8",
+      "metadataUrl": "https://somafm.com/poptron/",
+      "genre": "Pop/Electronic",
+      "icon": "star"
+    },
+    {
+      "id": "soma_fm_covers",
+      "name": "SomaFM - Covers",
+      "url": "https://stream.somafm.com/covers128.m3u8",
+      "metadataUrl": "https://somafm.com/covers/",
+      "genre": "Cover Songs",
+      "icon": "music_note"
+    },
+    {
+      "id": "soma_fm_drone",
+      "name": "SomaFM - Drone Zone",
+      "url": "https://stream.somafm.com/dronezone128.m3u8",
+      "metadataUrl": "https://somafm.com/dronezone/",
+      "genre": "Ambient/Drone",
+      "icon": "self_care"
+    },
+    {
+      "id": "soma_fm_sonicuniverse",
+      "name": "SomaFM - Sonic Universe",
+      "url": "https://stream.somafm.com/sonicuniverse128.m3u8",
+      "metadataUrl": "https://somafm.com/sonicuniverse/",
+      "genre": "Electronic/Ambient",
+      "icon": "radio"
+    },
+    {
+      "id": "soma_fm_thetrip",
+      "name": "SomaFM - The Trip",
+      "url": "https://stream.somafm.com/thetrip128.m3u8",
+      "metadataUrl": "https://somafm.com/thetrip/",
+      "genre": "Psychedelic/Rock",
+      "icon": "electric_bolt"
+    },
+    {
+      "id": "soma_fm_beatblender",
+      "name": "SomaFM - Beat Blender",
+      "url": "https://stream.somafm.com/beatblender128.m3u8",
+      "metadataUrl": "https://somafm.com/beatblender/",
+      "genre": "Electronic/Beats",
+      "icon": "favorite"
+    },
+    {
+      "id": "soma_fm_defcon",
+      "name": "SomaFM - DefCon",
+      "url": "https://stream.somafm.com/defcon128.m3u8",
+      "metadataUrl": "https://somafm.com/defcon/",
+      "genre": "Industrial/Electronic",
+      "icon": "electric_bolt"
+    },
+    {
+      "id": "soma_fm_secretagent",
+      "name": "SomaFM - Secret Agent",
+      "url": "https://stream.somafm.com/secretagent128.m3u8",
+      "metadataUrl": "https://somafm.com/secretagent/",
+      "genre": "Spy/Jazz/Funk",
+      "icon": "library_music"
+    },
+    {
+      "id": "soma_fm_xmascarol",
+      "name": "SomaFM - Christmas Carols",
+      "url": "https://stream.somafm.com/xmascarol128.m3u8",
+      "metadataUrl": "https://somafm.com/xmascarol/",
+      "genre": "Holiday/Carols",
+      "icon": "favorite"
+    },
+    {
+      "id": "soma_fm_bagel",
+      "name": "SomaFM - Bagel Radio",
+      "url": "https://stream.somafm.com/bagel128.m3u8",
+      "metadataUrl": "https://somafm.com/bagel/",
+      "genre": "Indie/Eclectic",
+      "icon": "music_note"
+    },
+    {
+      "id": "soma_fm_lush",
+      "name": "SomaFM - Lush",
+      "url": "https://stream.somafm.com/lush128.m3u8",
+      "metadataUrl": "https://somafm.com/lush/",
+      "genre": "Downtempo/Chill",
+      "icon": "favorite"
+    },
+    {
+      "id": "soma_fm_u80s",
+      "name": "SomaFM - Underground 80s",
+      "url": "https://stream.somafm.com/u80s128.m3u8",
+      "metadataUrl": "https://somafm.com/u80s/",
+      "genre": "80s/Electronic",
+      "icon": "history"
+    },
+    {
+      "id": "soma_fm_subtopia",
+      "name": "SomaFM - Subtopia",
+      "url": "https://stream.somafm.com/subtopia128.m3u8",
+      "metadataUrl": "https://somafm.com/subtopia/",
+      "genre": "Dub/Reggae",
+      "icon": "music_note"
+    },
+    {
+      "id": "soma_fm_doomed",
+      "name": "SomaFM - Doomed",
+      "url": "https://stream.somafm.com/doomed128.m3u8",
+      "metadataUrl": "https://somafm.com/doomed/",
+      "genre": "Doom/Stoner Rock",
+      "icon": "electric_bolt"
+    },
+    {
+      "id": "soma_fm_bootliquor",
+      "name": "SomaFM - Boot Liquor",
+      "url": "https://stream.somafm.com/bootliquor128.m3u8",
+      "metadataUrl": "https://somafm.com/bootliquor/",
+      "genre": "Country/Alternative",
+      "icon": "music_note"
+    },
+    {
+      "id": "soma_fm_thisamericanlife",
+      "name": "SomaFM - Tag's Lazy Days",
+      "url": "https://stream.somafm.com/tagslazy128.m3u8",
+      "metadataUrl": "https://somafm.com/tagslazy/",
+      "genre": "Storytelling",
+      "icon": "radio"
+    },
+    {
+      "id": "soma_fm_complextro",
+      "name": "SomaFM - Complextro",
+      "url": "https://stream.somafm.com/complextro128.m3u8",
+      "metadataUrl": "https://somafm.com/complextro/",
+      "genre": "Electro/Experimental",
+      "icon": "electric_bolt"
+    },
+    {
+      "id": "soma_fm_sf1033",
+      "name": "SomaFM - SF 10:33",
+      "url": "https://stream.somafm.com/sf1033128.m3u8",
+      "metadataUrl": "https://somafm.com/sf1033/",
+      "genre": "Indie/Alternative",
+      "icon": "music_note"
+    }
+  ]
+}

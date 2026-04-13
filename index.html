@@ -149,6 +149,11 @@
             <input class="bg-transparent border-none focus:ring-0 text-sm w-full placeholder:text-neutral-500" placeholder="Search streams, stations..." type="text"/>
         </div>
         <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2 bg-surface-container-high/40 px-4 py-2 rounded-full glass-panel">
+                <span class="text-xs font-semibold text-on-surface-variant">Streams:</span>
+                <button onclick="switchStreamSource('streams-public.json')" class="px-3 py-1 rounded-full text-xs font-bold bg-primary text-on-primary hover:scale-105 transition-all">Public</button>
+                <button onclick="switchStreamSource('streams.json')" class="px-3 py-1 rounded-full text-xs font-bold bg-surface-container hover:bg-surface-container-high transition-all text-on-surface">Europe 2</button>
+            </div>
             <button class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center hover:bg-surface-bright transition-colors">
                 <span class="material-symbols-outlined text-on-surface">notifications</span>
             </button>
@@ -324,9 +329,9 @@
     const audioElements = {};
 
     // Load streams from JSON
-    async function loadStreamsFromJSON() {
+    async function loadStreamsFromJSON(filename = 'streams.json') {
         try {
-            const response = await fetch('streams.json');
+            const response = await fetch(filename);
             const data = await response.json();
             streams = data.streams;
             renderStreams();
@@ -334,11 +339,30 @@
             if (streams.length > 0) {
                 selectStream(0);
             }
+            console.log(`Loaded ${streams.length} streams from ${filename}`);
         } catch (error) {
             console.error('Error loading streams:', error);
-            // Fallback to default streams
-            loadDefaultStreams();
+            // Try fallback
+            if (filename === 'streams-public.json') {
+                console.log('Trying fallback...');
+                loadStreamsFromJSON('streams.json');
+            } else {
+                loadDefaultStreams();
+            }
         }
+    }
+
+    function switchStreamSource(filename) {
+        isPlaying = false;
+        // Stop all audio
+        Object.keys(audioElements).forEach(id => {
+            audioElements[id].pause();
+        });
+        audioElements = {};
+        currentStreamIndex = -1;
+
+        loadStreamsFromJSON(filename);
+        updatePlayUI();
     }
 
     function loadDefaultStreams() {
@@ -434,26 +458,80 @@
             return;
         }
 
-        isPlaying = !isPlaying;
         const stream = streams[currentStreamIndex];
 
-        document.getElementById('play-btn-icon').textContent = isPlaying ? 'pause' : 'play_arrow';
-        document.getElementById('play-btn-text').textContent = isPlaying ? 'Pause' : 'Play';
-        document.getElementById('player-play-icon').textContent = isPlaying ? 'pause' : 'play_arrow';
+        // Create or get audio element for this stream
+        if (!audioElements[stream.id]) {
+            const audio = new Audio();
+            audio.crossOrigin = 'anonymous';
+            audio.src = stream.url;
 
-        if (isPlaying) {
-            console.log(`Playing stream: ${stream.name} - ${stream.url}`);
-            document.getElementById('player-stream-status').textContent = 'Loading metadata...';
+            // Handle audio events
+            audio.addEventListener('play', () => {
+                isPlaying = true;
+                updatePlayUI();
+            });
 
-            // Start updating metadata
-            updateCurrentMetadata();
-            metadataUpdateInterval = setInterval(updateCurrentMetadata, 30000); // Update every 30 seconds
-        } else {
-            document.getElementById('player-stream-status').textContent = 'Paused';
-            if (metadataUpdateInterval) {
-                clearInterval(metadataUpdateInterval);
-            }
+            audio.addEventListener('pause', () => {
+                isPlaying = false;
+                updatePlayUI();
+            });
+
+            audio.addEventListener('error', (e) => {
+                console.error('Audio error:', e);
+                isPlaying = false;
+                document.getElementById('player-stream-status').textContent = 'Error loading stream';
+                updatePlayUI();
+            });
+
+            audio.addEventListener('loadstart', () => {
+                document.getElementById('player-stream-status').textContent = 'Connecting...';
+            });
+
+            audio.addEventListener('canplay', () => {
+                document.getElementById('player-stream-status').textContent = 'Playing...';
+                updateCurrentMetadata();
+            });
+
+            audioElements[stream.id] = audio;
         }
+
+        const audio = audioElements[stream.id];
+
+        // Stop all other streams
+        Object.keys(audioElements).forEach(id => {
+            if (id !== stream.id) {
+                audioElements[id].pause();
+            }
+        });
+
+        // Toggle current stream
+        if (audio.paused) {
+            audio.play().catch(err => {
+                console.error('Playback error:', err);
+                document.getElementById('player-stream-status').textContent = 'Cannot play: ' + err.message;
+            });
+            isPlaying = true;
+
+            // Start metadata updates
+            if (metadataUpdateInterval) clearInterval(metadataUpdateInterval);
+            metadataUpdateInterval = setInterval(updateCurrentMetadata, 30000);
+        } else {
+            audio.pause();
+            isPlaying = false;
+            document.getElementById('player-stream-status').textContent = 'Paused';
+            if (metadataUpdateInterval) clearInterval(metadataUpdateInterval);
+        }
+
+        updatePlayUI();
+    }
+
+    function updatePlayUI() {
+        const icon = isPlaying ? 'pause' : 'play_arrow';
+        const text = isPlaying ? 'Pause' : 'Play';
+        document.getElementById('play-btn-icon').textContent = icon;
+        document.getElementById('play-btn-text').textContent = text;
+        document.getElementById('player-play-icon').textContent = icon;
     }
 
     function openAddStreamModal() {
