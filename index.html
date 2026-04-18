@@ -573,7 +573,144 @@
   .c-8 { background: linear-gradient(135deg, #4a5668, #242a35); }
   .c-9 { background: linear-gradient(135deg, #ffd166, #c9921a); color: #2a1c00 !important; }
 
-  @media (max-width: 520px) {
+  /* ── Quiz banner ────────────────────────────── */
+  .quiz-banner {
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(165,107,255,0.18), rgba(94,139,255,0.18));
+    border: 1px solid rgba(165,107,255,0.25);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: background .2s, transform .15s;
+  }
+  .quiz-banner:hover { background: linear-gradient(135deg, rgba(165,107,255,0.26), rgba(94,139,255,0.26)); transform: translateY(-1px); }
+  .quiz-banner:active { transform: scale(0.98); }
+  .quiz-banner-emoji { font-size: 26px; flex-shrink: 0; }
+  .quiz-banner-text { flex: 1; min-width: 0; }
+  .quiz-banner-title { font-size: 14px; font-weight: 700; letter-spacing: -0.01em; }
+  .quiz-banner-sub   { font-size: 12px; color: var(--fg-dim); margin-top: 1px; }
+  .quiz-banner-arrow { font-size: 18px; color: var(--fg-dim); flex-shrink: 0; }
+
+  /* Quiz modal */
+  .quiz-overlay {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(20,22,28,0.45);
+    backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    opacity: 0; pointer-events: none;
+    transition: opacity .25s;
+  }
+  .quiz-overlay.is-open { opacity: 1; pointer-events: all; }
+
+  .quiz-modal {
+    width: 100%; max-width: 420px;
+    background: rgba(255,255,255,0.88);
+    backdrop-filter: saturate(180%) blur(32px);
+    -webkit-backdrop-filter: saturate(180%) blur(32px);
+    border-radius: 24px;
+    border: 1px solid rgba(255,255,255,0.9);
+    box-shadow: 0 24px 60px -12px rgba(20,22,28,0.3);
+    overflow: hidden;
+    transform: translateY(16px) scale(0.97);
+    transition: transform .3s cubic-bezier(.4,0,.2,1);
+  }
+  .quiz-overlay.is-open .quiz-modal { transform: translateY(0) scale(1); }
+
+  .quiz-inner { padding: 28px 24px 24px; }
+
+  .quiz-progress {
+    display: flex; gap: 5px; margin-bottom: 20px;
+  }
+  .quiz-progress span {
+    flex: 1; height: 3px; border-radius: 2px;
+    background: rgba(20,22,28,0.1);
+    transition: background .3s;
+  }
+  .quiz-progress span.done { background: var(--accent); }
+
+  .quiz-question {
+    font-size: 18px; font-weight: 700;
+    letter-spacing: -0.02em; line-height: 1.3;
+    margin-bottom: 6px;
+  }
+  .quiz-hint {
+    font-size: 12px; color: var(--fg-dim);
+    margin-bottom: 20px;
+  }
+  .quiz-choices {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .quiz-choice {
+    border: 1.5px solid rgba(20,22,28,0.1);
+    border-radius: 14px;
+    padding: 12px 10px;
+    text-align: center;
+    cursor: pointer;
+    background: rgba(255,255,255,0.6);
+    transition: border-color .15s, background .15s, transform .12s;
+    font: inherit; font-size: 13px; font-weight: 500;
+    color: var(--fg);
+    line-height: 1.3;
+  }
+  .quiz-choice:hover { border-color: var(--accent); background: rgba(10,132,255,0.06); }
+  .quiz-choice:active { transform: scale(0.96); }
+  .quiz-choice .choice-emoji { display: block; font-size: 22px; margin-bottom: 5px; }
+
+  /* Result screen */
+  .quiz-result { padding: 28px 24px 28px; text-align: center; }
+  .quiz-result-logo {
+    width: 88px; height: 88px;
+    border-radius: 20px;
+    overflow: hidden;
+    margin: 0 auto 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    background: rgba(20,22,28,0.08);
+  }
+  .quiz-result-logo img { width: 100%; height: 100%; object-fit: cover; }
+  .quiz-result-intro { font-size: 13px; color: var(--fg-dim); margin-bottom: 4px; }
+  .quiz-result-name {
+    font-size: 22px; font-weight: 800;
+    letter-spacing: -0.03em; margin-bottom: 6px;
+  }
+  .quiz-result-desc { font-size: 13px; color: var(--fg-dim); margin-bottom: 24px; line-height: 1.5; }
+  .quiz-result-actions { display: flex; gap: 10px; justify-content: center; }
+  .quiz-btn-play {
+    padding: 11px 22px;
+    border-radius: 50px;
+    border: 0;
+    background: #111418;
+    color: #fff;
+    font: inherit; font-size: 14px; font-weight: 600;
+    cursor: pointer;
+    transition: transform .15s, background .2s;
+  }
+  .quiz-btn-play:hover { transform: scale(1.03); }
+  .quiz-btn-retry {
+    padding: 11px 18px;
+    border-radius: 50px;
+    border: 1.5px solid rgba(20,22,28,0.12);
+    background: transparent;
+    font: inherit; font-size: 14px; font-weight: 500;
+    color: var(--fg-dim);
+    cursor: pointer;
+    transition: border-color .15s, color .15s;
+  }
+  .quiz-btn-retry:hover { border-color: var(--fg); color: var(--fg); }
+  .quiz-close {
+    position: absolute; top: 16px; right: 16px;
+    width: 28px; height: 28px;
+    border-radius: 50%; border: 0;
+    background: rgba(20,22,28,0.08);
+    color: var(--fg-dim);
+    font-size: 16px; line-height: 1;
+    cursor: pointer; display: grid; place-items: center;
+    transition: background .15s;
+  }
+  .quiz-close:hover { background: rgba(20,22,28,0.14); }
     .volume { display: none; }
     .player-top { grid-template-columns: 56px 1fr; }
   }
@@ -631,6 +768,16 @@
 
   </section>
 
+  <!-- Quiz banner -->
+  <div class="quiz-banner" id="quizBanner" role="button" tabindex="0" aria-label="Lancer le quiz">
+    <span class="quiz-banner-emoji">🎯</span>
+    <div class="quiz-banner-text">
+      <div class="quiz-banner-title">Quelle webradio es-tu ?</div>
+      <div class="quiz-banner-sub">5 questions · résultat immédiat</div>
+    </div>
+    <span class="quiz-banner-arrow">→</span>
+  </div>
+
   <!-- Search -->
   <div class="search">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
@@ -662,6 +809,14 @@
   <ul class="stations" id="list" role="listbox" aria-label="Stations"></ul>
 
 </main>
+
+<!-- Quiz modal -->
+<div class="quiz-overlay" id="quizOverlay" aria-modal="true" role="dialog">
+  <div class="quiz-modal" id="quizModal">
+    <button class="quiz-close" id="quizClose" aria-label="Fermer">✕</button>
+    <div class="quiz-inner" id="quizInner"></div>
+  </div>
+</div>
 
 <audio id="audio" crossorigin="anonymous" preload="none"></audio>
 
@@ -1077,7 +1232,238 @@
     renderList(search.value);
   });
 
-  // Initial render
+  // ── Quiz ─────────────────────────────────────────────────────────────────────
+  const QUIZ = [
+    {
+      q: "C'est quoi ton mood là, maintenant ?",
+      hint: "Sois honnête 😄",
+      choices: [
+        { emoji: "⚡", label: "Full énergie",   val: "energy"    },
+        { emoji: "🕰️", label: "Nostalgie",      val: "nostalgia" },
+        { emoji: "❤️", label: "Mood romantique", val: "romantic"  },
+        { emoji: "🌿", label: "Détente totale",  val: "chill"     },
+      ]
+    },
+    {
+      q: "T'es en train de faire quoi ?",
+      hint: "On ne juge pas",
+      choices: [
+        { emoji: "🏃", label: "Sport / Cardio",     val: "sport"  },
+        { emoji: "💻", label: "Boulot / Concentration", val: "work" },
+        { emoji: "🥳", label: "Soirée / Fête",      val: "party"  },
+        { emoji: "🛋️", label: "Flemme au canapé",   val: "home"   },
+      ]
+    },
+    {
+      q: "Ta décennie musicale préférée ?",
+      hint: "Celle qui fait tout de suite sourire",
+      choices: [
+        { emoji: "🕺", label: "70s / 80s",    val: "old"     },
+        { emoji: "📼", label: "90s / 2000s",  val: "retro"   },
+        { emoji: "📱", label: "2010s / 2020s", val: "recent" },
+        { emoji: "🎭", label: "Peu importe !",  val: "any"    },
+      ]
+    },
+    {
+      q: "France ou international ?",
+      hint: "Là tout de suite",
+      choices: [
+        { emoji: "🇫🇷", label: "Chanson française", val: "french" },
+        { emoji: "🌍", label: "International",       val: "intl"   },
+        { emoji: "🎭", label: "Un mix des deux",     val: "mix"    },
+        { emoji: "🎬", label: "Musiques de films",   val: "cine"   },
+      ]
+    },
+    {
+      q: "Ton vibe musical du moment ?",
+      hint: "Dernier choix, on y est presque !",
+      choices: [
+        { emoji: "🎸", label: "Rock / Pop Rock",   val: "rock"    },
+        { emoji: "💜", label: "Électro / Dance",   val: "electro" },
+        { emoji: "🎷", label: "Soul / R'n'B",      val: "soul"    },
+        { emoji: "🌊", label: "Doux / Acoustique", val: "soft"    },
+      ]
+    },
+  ];
+
+  // Scoring: chaque réponse donne des points à des indices de stations
+  // On mappe les valeurs de réponses vers des stations emblématiques (index dans STATIONS)
+  const QUIZ_SCORES = {
+    // mood
+    energy:    [3, 10, 18, 30],   // Hits, Cardio, Dance, RFM Party 90
+    nostalgia: [1, 11, 27, 29],   // Classics, 90s, RFM Collector, RFM 80'
+    romantic:  [16, 12, 33, 28],  // Love, Millenium, RFM Love, RFM Slow
+    chill:     [26, 24, 32, 35],  // Zen, Home, RFM Lounge, RFM California
+    // activité
+    sport:     [10, 21, 53],      // Cardio, Running, RFM Run&Fit
+    work:      [25, 6, 32],       // Work, Live, RFM Lounge
+    party:     [18, 3, 30, 51],   // Dance, Hits, RFM Party 90, RFM Hit Party
+    home:      [24, 16, 34],      // Home, Love, RFM California
+    // décennie
+    old:       [1, 27, 29, 42],   // Classics, Collector, 80', RFM 70s
+    retro:     [11, 12, 30, 47],  // 90s, Millenium, Party 90, RFM 80-90
+    recent:    [3, 20, 50, 51],   // Hits, Pop 2020, RFM Hit 2010, Hit Party
+    any:       [5, 27, 36],       // Mix, Collector, RFM Top 50
+    // langue
+    french:    [8, 36, 22, 43],   // 100%Fr, RFM 100%Fr, Duos, RFM Nouvelle Scène
+    intl:      [0, 3, 36, 50],    // New, Hits, Top50, Hit2010
+    mix:       [5, 27, 35],       // Mix, Collector, RFM California
+    cine:      [19, 54],          // Ciné, RFM Cinéma
+    // vibe
+    rock:      [4, 14, 15, 46],   // Rock, Pop Rock, French Touch, RFM New Wave
+    electro:   [18, 15, 48],      // Dance, French Touch, RFM Funk
+    soul:      [23, 48, 39],      // Soul R'n'B, RFM Funk, RFM Night Fever
+    soft:      [2, 9, 26, 31],    // Acoustic, Slow, Zen, RFM Lounge
+  };
+
+  // Descriptions courtes pour le résultat
+  const STATION_DESCS = {
+    0:  "Les toutes dernières sorties, avant tout le monde.",
+    1:  "Les classiques qui ont forgé la légende Europe 2.",
+    2:  "La musique dans sa version la plus pure et épurée.",
+    3:  "Les hits du moment qui cartonnent en ce moment.",
+    4:  "Le rock dans toute sa splendeur, guitares en avant.",
+    5:  "Un mix parfait pour ne pas choisir.",
+    6:  "Le direct Europe 2, live et sans filtre.",
+    7:  "Les talents de demain, découverts aujourd'hui.",
+    8:  "100% chanson française, de Goldman à Vianney.",
+    9:  "Les plus beaux slows pour danser joue contre joue.",
+    10: "L'énergie cardio pour dépasser tes limites.",
+    11: "Les tubes des années 90, indestructibles.",
+    12: "Les hits des années 2000, déjà nostalgiques.",
+    13: "Pop féminine et puissante, de Beyoncé à Ava Max.",
+    14: "Le meilleur de la pop et du rock mélangés.",
+    15: "L'électro française dans toute sa créativité.",
+    16: "Les plus belles chansons d'amour, toutes générations.",
+    17: "La pop des années 2010, fraîche et efficace.",
+    18: "Dance et club, pour bouger même assis.",
+    19: "Les plus belles bandes originales de films.",
+    20: "La pop actuelle des années 2020.",
+    21: "Le tempo parfait pour courir plus vite.",
+    22: "Les duos qui font chavirer les cœurs.",
+    23: "Soul, R'n'B et groove à l'état pur.",
+    24: "La playlist parfaite pour rester chez soi.",
+    25: "Concentration maximale, productivité maximale.",
+    26: "Détente, sérénité et musiques apaisantes.",
+    27: "Le meilleur de RFM Collector, intemporel.",
+    28: "Disco et funk qui font vibrer la piste.",
+    29: "La programmation mythique de RFM.",
+    30: "Les meilleurs sons des années 80.",
+    31: "Les tubes des années 90, version RFM.",
+    32: "Lounge et douceur pour se poser.",
+    33: "Le top 50 RFM, les hits qui cartonnent.",
+    34: "California dreamin' et Soft Rock ensoleillé.",
+    35: "Les plus belles chansons d'amour selon RFM.",
+    36: "Pop Rock entre douceur et puissance.",
+    37: "100% chansons françaises et francophones.",
+    38: "New Wave et post-punk, une époque dorée.",
+    39: "Les slows pour un quart d'heure américain.",
+    40: "80s et 90s réunis, le meilleur des deux.",
+    41: "Les chagrins d'amour mis en musique.",
+    42: "Le meilleur des années 70, funky et solaire.",
+    43: "Le mix de Yann Muller, énergie garantie.",
+    44: "Les plus belles musiques de films selon RFM.",
+    45: "Les hits des années 2000 qui restent en tête.",
+    46: "Les tubes des années 2010 qu'on rechante encore.",
+    47: "Le meilleur de la musique jouée en live.",
+    48: "Les talents de demain selon RFM.",
+    49: "Le charme des chansons italiennes.",
+    50: "Les plus belles chansons de Noël.",
+    51: "La route s'écoute mieux avec RFM On The Road.",
+    52: "Funk pur et groove assumé.",
+    53: "La playlist sport de RFM pour se dépasser.",
+    54: "Le meilleur du Disco, de Travolta à aujourd'hui.",
+    55: "Les tubes des années 80, version fête.",
+  };
+
+  let quizAnswers = [];
+  let quizStep = 0;
+
+  function openQuiz() {
+    quizAnswers = [];
+    quizStep = 0;
+    quizOverlay.classList.add("is-open");
+    renderQuizStep();
+  }
+
+  function closeQuiz() {
+    quizOverlay.classList.remove("is-open");
+  }
+
+  function renderQuizStep() {
+    const q = QUIZ[quizStep];
+    quizInner.innerHTML = `
+      <div class="quiz-progress">
+        ${QUIZ.map((_, i) => `<span class="${i < quizStep ? 'done' : ''}"></span>`).join("")}
+      </div>
+      <div class="quiz-question">${q.q}</div>
+      <div class="quiz-hint">${q.hint}</div>
+      <div class="quiz-choices">
+        ${q.choices.map(c => `
+          <button class="quiz-choice" data-val="${c.val}">
+            <span class="choice-emoji">${c.emoji}</span>
+            ${c.label}
+          </button>`).join("")}
+      </div>`;
+
+    quizInner.querySelectorAll(".quiz-choice").forEach(btn => {
+      btn.addEventListener("click", () => {
+        quizAnswers.push(btn.dataset.val);
+        quizStep++;
+        if (quizStep >= QUIZ.length) showQuizResult();
+        else renderQuizStep();
+      });
+    });
+  }
+
+  function showQuizResult() {
+    // Tally scores
+    const scores = new Array(STATIONS.length).fill(0);
+    quizAnswers.forEach(val => {
+      (QUIZ_SCORES[val] || []).forEach(idx => {
+        if (idx < STATIONS.length) scores[idx] += 1;
+      });
+    });
+    // Add small random tiebreak
+    scores.forEach((_, i) => scores[i] += Math.random() * 0.1);
+    const winner = scores.indexOf(Math.max(...scores));
+    const s = STATIONS[winner];
+    const desc = STATION_DESCS[winner] || s.tag;
+
+    const logoHtml = s.logo
+      ? `<img src="${escapeHtml(s.logo)}" alt="${escapeHtml(s.name)}" />`
+      : `<div style="width:100%;height:100%;background:var(--c${s.color});display:grid;place-items:center;font-size:28px;font-weight:800;color:#fff;">${initials(s.name)}</div>`;
+
+    quizInner.innerHTML = "";
+    const result = document.createElement("div");
+    result.className = "quiz-result";
+    result.innerHTML = `
+      <div class="quiz-result-logo">${logoHtml}</div>
+      <div class="quiz-result-intro">Ta webradio idéale, c'est…</div>
+      <div class="quiz-result-name">${escapeHtml(s.name)}</div>
+      <div class="quiz-result-desc">${escapeHtml(desc)}${s.wr ? ` <span style="opacity:.5;font-size:11px;">WR${s.wr}</span>` : ""}</div>
+      <div class="quiz-result-actions">
+        <button class="quiz-btn-play" id="quizPlay">▶ Écouter maintenant</button>
+        <button class="quiz-btn-retry" id="quizRetry">Recommencer</button>
+      </div>`;
+    quizInner.appendChild(result);
+
+    document.getElementById("quizPlay").addEventListener("click", () => {
+      closeQuiz();
+      selectStation(winner, true);
+    });
+    document.getElementById("quizRetry").addEventListener("click", () => {
+      quizAnswers = [];
+      quizStep = 0;
+      renderQuizStep();
+    });
+  }
+
+  const quizOverlay = document.getElementById("quizOverlay");
+  document.getElementById("quizBanner").addEventListener("click", openQuiz);
+  document.getElementById("quizBanner").addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") openQuiz(); });
+  document.getElementById("quizClose").addEventListener("click", closeQuiz);
+  quizOverlay.addEventListener("click", e => { if (e.target === quizOverlay) closeQuiz(); });
   renderList();
   if (typeof saved.stationIndex === "number" && STATIONS[saved.stationIndex]) {
     // Pré-sélectionne sans démarrer (les navigateurs bloquent l'autoplay sans interaction)
