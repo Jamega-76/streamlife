@@ -86,7 +86,7 @@
     position: sticky;
     top: 0;
     border-radius: 22px;
-    padding: 14px 14px 14px 14px;
+    padding: 14px;
     background: var(--glass);
     backdrop-filter: saturate(180%) blur(32px);
     -webkit-backdrop-filter: saturate(180%) blur(32px);
@@ -95,59 +95,87 @@
       0 1px 0 rgba(255,255,255,0.6) inset,
       0 18px 40px -18px rgba(20,22,28,0.25),
       0 2px 6px rgba(20,22,28,0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* top row : artwork + meta + volume */
+  .player-top {
     display: grid;
-    grid-template-columns: 56px 1fr auto;
-    grid-template-rows: auto auto;
+    grid-template-columns: 64px 1fr auto;
     column-gap: 14px;
-    row-gap: 6px;
     align-items: center;
   }
 
-  .play-btn {
-    grid-row: 1 / span 2;
-    width: 56px; height: 56px;
-    border-radius: 50%;
-    border: 0;
-    background: #111418;
-    color: #fff;
-    cursor: pointer;
-    display: grid; place-items: center;
-    transition: transform .15s ease, background .2s ease;
-    box-shadow: 0 8px 20px -8px rgba(0,0,0,0.5);
+  /* Artwork */
+  .player-art {
+    width: 64px; height: 64px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgba(20,22,28,0.08);
+    flex-shrink: 0;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.18);
   }
-  .play-btn:hover { transform: scale(1.04); }
-  .play-btn:active { transform: scale(0.96); }
-  .play-btn svg { width: 22px; height: 22px; }
-  .play-btn .ico-pause { display: none; }
-  .player.is-playing .play-btn .ico-play { display: none; }
-  .player.is-playing .play-btn .ico-pause { display: block; }
+  .player-art img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: opacity .4s ease;
+  }
+  .player-art img.hidden { opacity: 0; }
+  /* placeholder initials when no art */
+  .player-art-placeholder {
+    position: absolute; inset: 0;
+    display: grid; place-items: center;
+    font-size: 20px; font-weight: 700; color: rgba(20,22,28,0.25);
+    letter-spacing: -0.02em;
+  }
 
   .player-meta {
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    padding-top: 2px;
+    gap: 3px;
   }
   .player-station {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--fg-dim);
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .player-track {
     font-size: 15px;
-    font-weight: 600;
-    letter-spacing: -0.015em;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+  }
+  .player-artist {
+    font-size: 13px;
+    color: var(--fg-dim);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
   .player-sub {
-    font-size: 12px;
-    color: var(--fg-dim);
+    font-size: 11px;
+    color: var(--fg-faint);
     display: flex;
     align-items: center;
-    gap: 8px;
-    min-height: 14px;
+    gap: 6px;
+    margin-top: 2px;
   }
   .player-sub .dot {
     width: 6px; height: 6px; border-radius: 50%;
     background: var(--fg-faint);
+    flex-shrink: 0;
     transition: background .2s;
   }
   .player.is-playing .player-sub .dot {
@@ -168,9 +196,64 @@
     50% { opacity: 1; }
   }
 
+  .volume {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-right: 4px;
+  }
+  .volume svg { width: 16px; height: 16px; color: var(--fg-dim); flex-shrink: 0; }
+  .volume input {
+    -webkit-appearance: none; appearance: none;
+    width: 80px; height: 4px;
+    background: rgba(20,22,28,0.12);
+    border-radius: 2px;
+    outline: none;
+  }
+  .volume input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.25), 0 0 0 0.5px rgba(0,0,0,0.1);
+    cursor: pointer;
+  }
+  .volume input::-moz-range-thumb {
+    width: 14px; height: 14px; border: 0; border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+    cursor: pointer;
+  }
+
+  /* bottom row: play btn + waveform */
+  .player-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .play-btn {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: 0;
+    background: #111418;
+    color: #fff;
+    cursor: pointer;
+    display: grid; place-items: center;
+    transition: transform .15s ease, background .2s ease;
+    box-shadow: 0 6px 16px -6px rgba(0,0,0,0.5);
+    flex-shrink: 0;
+  }
+  .play-btn:hover { transform: scale(1.06); }
+  .play-btn:active { transform: scale(0.94); }
+  .play-btn svg { width: 20px; height: 20px; }
+  .play-btn .ico-pause { display: none; }
+  .player.is-playing .play-btn .ico-play { display: none; }
+  .player.is-playing .play-btn .ico-pause { display: block; }
+
   /* waveform / equalizer */
   .wave {
-    grid-column: 2 / span 2;
+    flex: 1;
     height: 28px;
     display: flex;
     align-items: center;
@@ -195,37 +278,6 @@
   @keyframes bar {
     0%, 100% { height: 3px; }
     50%      { height: 22px; }
-  }
-
-  .volume {
-    grid-column: 3;
-    grid-row: 1;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding-right: 6px;
-  }
-  .volume svg { width: 16px; height: 16px; color: var(--fg-dim); }
-  .volume input {
-    -webkit-appearance: none; appearance: none;
-    width: 90px; height: 4px;
-    background: rgba(20,22,28,0.12);
-    border-radius: 2px;
-    outline: none;
-  }
-  .volume input::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 14px; height: 14px;
-    border-radius: 50%;
-    background: #fff;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.25), 0 0 0 0.5px rgba(0,0,0,0.1);
-    cursor: pointer;
-  }
-  .volume input::-moz-range-thumb {
-    width: 14px; height: 14px; border: 0; border-radius: 50%;
-    background: #fff;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.25);
-    cursor: pointer;
   }
 
   /* ── Search ─────────────────────────────────── */
@@ -406,8 +458,7 @@
 
   @media (max-width: 520px) {
     .volume { display: none; }
-    .wave { grid-column: 2 / span 2; }
-    .player { grid-template-columns: 56px 1fr; }
+    .player-top { grid-template-columns: 56px 1fr; }
   }
 </style>
 </head>
@@ -419,34 +470,48 @@
 
   <!-- Player -->
   <section class="player" id="player" aria-label="Lecteur">
-    <button class="play-btn" id="playBtn" aria-label="Lecture">
-      <svg class="ico-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-        <path d="M8 5.5v13a1 1 0 0 0 1.54.84l10.2-6.5a1 1 0 0 0 0-1.68L9.54 4.66A1 1 0 0 0 8 5.5z"/>
-      </svg>
-      <svg class="ico-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-        <rect x="6.5" y="5" width="4" height="14" rx="1.2"/>
-        <rect x="13.5" y="5" width="4" height="14" rx="1.2"/>
-      </svg>
-    </button>
 
-    <div class="player-meta">
-      <div class="player-station" id="nowName">Aucune station</div>
-      <div class="player-sub">
-        <span class="dot"></span>
-        <span id="nowStatus">Choisissez une radio ci-dessous</span>
+    <!-- top row: artwork + meta + volume -->
+    <div class="player-top">
+      <div class="player-art" id="playerArt">
+        <div class="player-art-placeholder" id="playerArtPlaceholder">♪</div>
+        <img id="playerArtImg" src="" alt="Pochette" class="hidden" />
+      </div>
+
+      <div class="player-meta">
+        <div class="player-station" id="nowName">Aucune station</div>
+        <div class="player-track" id="nowTrack">—</div>
+        <div class="player-artist" id="nowArtist"></div>
+        <div class="player-sub">
+          <span class="dot"></span>
+          <span id="nowStatus">Choisissez une radio ci-dessous</span>
+        </div>
+      </div>
+
+      <div class="volume" aria-label="Volume">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M11 5 6 9H3v6h3l5 4z"/>
+          <path d="M15.5 8.5a5 5 0 0 1 0 7"/>
+          <path d="M18.5 5.5a9 9 0 0 1 0 13"/>
+        </svg>
+        <input type="range" id="vol" min="0" max="1" step="0.01" value="0.8" aria-label="Volume"/>
       </div>
     </div>
 
-    <div class="volume" aria-label="Volume">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M11 5 6 9H3v6h3l5 4z"/>
-        <path d="M15.5 8.5a5 5 0 0 1 0 7"/>
-        <path d="M18.5 5.5a9 9 0 0 1 0 13"/>
-      </svg>
-      <input type="range" id="vol" min="0" max="1" step="0.01" value="0.8" aria-label="Volume"/>
+    <!-- bottom row: play btn + waveform -->
+    <div class="player-controls">
+      <button class="play-btn" id="playBtn" aria-label="Lecture">
+        <svg class="ico-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M8 5.5v13a1 1 0 0 0 1.54.84l10.2-6.5a1 1 0 0 0 0-1.68L9.54 4.66A1 1 0 0 0 8 5.5z"/>
+        </svg>
+        <svg class="ico-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <rect x="6.5" y="5" width="4" height="14" rx="1.2"/>
+          <rect x="13.5" y="5" width="4" height="14" rx="1.2"/>
+        </svg>
+      </button>
+      <div class="wave" id="wave" aria-hidden="true"></div>
     </div>
 
-    <div class="wave" id="wave" aria-hidden="true"></div>
   </section>
 
   <!-- Search -->
@@ -468,33 +533,33 @@
 <script>
   // User-provided stream list
   const STATIONS = [
-    { name: "Europe 2 New",            tag: "Nouveautés",           color: 2, url: "https://wr.lmn.fm/vr-wr1.mp3" },
-    { name: "Europe 2 Classics",       tag: "Classiques",           color: 8, url: "https://wr.lmn.fm/vr-wr2.mp3" },
-    { name: "Europe 2 Acoustic",       tag: "Acoustique",           color: 3, url: "https://wr.lmn.fm/vr-wr3.mp3" },
-    { name: "Europe 2 Hits",           tag: "Hits",                 color: 1, url: "https://wr.lmn.fm/vr-wr4.mp3" },
-    { name: "Europe 2 Rock",           tag: "Rock",                 color: 1, url: "https://wr.lmn.fm/vr-wr5.mp3" },
-    { name: "Europe 2 Mix",            tag: "Mix",                  color: 5, url: "https://wr.lmn.fm/vr-wr6.mp3" },
-    { name: "Europe 2 Live",           tag: "Live",                 color: 4, url: "https://wr.lmn.fm/vr-wr7.mp3" },
-    { name: "Europe 2 Nouvelle Scène", tag: "Découvertes",          color: 6, url: "https://wr.lmn.fm/vr-wr8.mp3" },
-    { name: "Europe 2 100% Français",  tag: "Chanson française",    color: 2, url: "https://wr.lmn.fm/vr-wr9.mp3" },
-    { name: "Europe 2 Slow",           tag: "Slows",                color: 7, url: "https://wr.lmn.fm/vr-wr10.mp3" },
-    { name: "Europe 2 Cardio",         tag: "Sport · Énergie",      color: 1, url: "https://wr.lmn.fm/vr-wr11.mp3" },
-    { name: "Europe 2 90's",           tag: "Années 90",            color: 5, url: "https://wr.lmn.fm/vr-wr12.mp3" },
-    { name: "Europe 2 Millenium",      tag: "Années 2000",          color: 2, url: "https://wr.lmn.fm/vr-wr13.mp3" },
-    { name: "Europe 2 Girl Power",     tag: "Pop · Female",         color: 7, url: "https://wr.lmn.fm/vr-wr14.mp3" },
-    { name: "Europe 2 Pop Rock",       tag: "Pop Rock",             color: 1, url: "https://wr.lmn.fm/vr-wr15.mp3" },
-    { name: "Europe 2 French Touch",   tag: "Électro française",    color: 5, url: "https://wr.lmn.fm/vr-wr16.mp3" },
-    { name: "Europe 2 Love",           tag: "Romantique",           color: 7, url: "https://wr.lmn.fm/vr-wr17.mp3" },
-    { name: "Europe 2 Pop 2010",       tag: "Pop 2010s",            color: 2, url: "https://wr.lmn.fm/vr-wr18.mp3" },
-    { name: "Europe 2 Dance",          tag: "Dance · Club",         color: 5, url: "https://wr.lmn.fm/vr-wr19.mp3" },
-    { name: "Europe 2 Ciné",           tag: "B.O. de films",        color: 8, url: "https://wr.lmn.fm/vr-wr20.mp3" },
-    { name: "Europe 2 Pop 2020",       tag: "Pop actuelle",         color: 2, url: "https://wr.lmn.fm/vr-wr21.mp3" },
-    { name: "Europe 2 Running",        tag: "Course · Tempo",       color: 3, url: "https://wr.lmn.fm/vr-wr22.mp3" },
-    { name: "Europe 2 Duos",           tag: "Duos",                 color: 7, url: "https://wr.lmn.fm/vr-wr23.mp3" },
-    { name: "Europe 2 Soul / R'n'B",   tag: "Soul · R'n'B",         color: 5, url: "https://wr.lmn.fm/vr-wr24.mp3" },
-    { name: "Europe 2 Home",           tag: "À la maison",          color: 3, url: "https://wr.lmn.fm/vr-wr25.mp3" },
-    { name: "Work",                    tag: "Concentration",        color: 8, url: "https://wr.lmn.fm/vr-wr26.mp3" },
-    { name: "Europe 2 Zen",            tag: "Détente",              color: 6, url: "https://wr.lmn.fm/vr-wr27.mp3" },
+    { name: "Europe 2 New",            tag: "Nouveautés",           color: 2, url: "https://wr.lmn.fm/vr-wr1.mp3",  metaUrl: "https://direct-radio.rfm.fr/playout?radio=2001" },
+    { name: "Europe 2 Classics",       tag: "Classiques",           color: 8, url: "https://wr.lmn.fm/vr-wr2.mp3",  metaUrl: "https://direct-radio.rfm.fr/playout?radio=2002" },
+    { name: "Europe 2 Acoustic",       tag: "Acoustique",           color: 3, url: "https://wr.lmn.fm/vr-wr3.mp3",  metaUrl: "https://direct-radio.rfm.fr/playout?radio=2003" },
+    { name: "Europe 2 Hits",           tag: "Hits",                 color: 1, url: "https://wr.lmn.fm/vr-wr4.mp3",  metaUrl: "https://direct-radio.rfm.fr/playout?radio=2004" },
+    { name: "Europe 2 Rock",           tag: "Rock",                 color: 1, url: "https://wr.lmn.fm/vr-wr5.mp3",  metaUrl: "https://direct-radio.rfm.fr/playout?radio=2005" },
+    { name: "Europe 2 Mix",            tag: "Mix",                  color: 5, url: "https://wr.lmn.fm/vr-wr6.mp3",  metaUrl: "https://direct-radio.rfm.fr/playout?radio=2006" },
+    { name: "Europe 2 Live",           tag: "Live",                 color: 4, url: "https://wr.lmn.fm/vr-wr7.mp3",  metaUrl: "https://direct-radio.rfm.fr/playout?radio=2007" },
+    { name: "Europe 2 Nouvelle Scène", tag: "Découvertes",          color: 6, url: "https://wr.lmn.fm/vr-wr8.mp3",  metaUrl: "https://direct-radio.rfm.fr/playout?radio=2008" },
+    { name: "Europe 2 100% Français",  tag: "Chanson française",    color: 2, url: "https://wr.lmn.fm/vr-wr9.mp3",  metaUrl: "https://direct-radio.rfm.fr/playout?radio=2009" },
+    { name: "Europe 2 Slow",           tag: "Slows",                color: 7, url: "https://wr.lmn.fm/vr-wr10.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=2010" },
+    { name: "Europe 2 Cardio",         tag: "Sport · Énergie",      color: 1, url: "https://wr.lmn.fm/vr-wr11.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=2011" },
+    { name: "Europe 2 90's",           tag: "Années 90",            color: 5, url: "https://wr.lmn.fm/vr-wr12.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=2012" },
+    { name: "Europe 2 Millenium",      tag: "Années 2000",          color: 2, url: "https://wr.lmn.fm/vr-wr13.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=2013" },
+    { name: "Europe 2 Girl Power",     tag: "Pop · Female",         color: 7, url: "https://wr.lmn.fm/vr-wr14.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=2014" },
+    { name: "Europe 2 Pop Rock",       tag: "Pop Rock",             color: 1, url: "https://wr.lmn.fm/vr-wr15.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=2015" },
+    { name: "Europe 2 French Touch",   tag: "Électro française",    color: 5, url: "https://wr.lmn.fm/vr-wr16.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=2016" },
+    { name: "Europe 2 Love",           tag: "Romantique",           color: 7, url: "https://wr.lmn.fm/vr-wr17.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=2017" },
+    { name: "Europe 2 Pop 2010",       tag: "Pop 2010s",            color: 2, url: "https://wr.lmn.fm/vr-wr18.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=2018" },
+    { name: "Europe 2 Dance",          tag: "Dance · Club",         color: 5, url: "https://wr.lmn.fm/vr-wr19.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=2019" },
+    { name: "Europe 2 Ciné",           tag: "B.O. de films",        color: 8, url: "https://wr.lmn.fm/vr-wr20.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=2020" },
+    { name: "Europe 2 Pop 2020",       tag: "Pop actuelle",         color: 2, url: "https://wr.lmn.fm/vr-wr21.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=2021" },
+    { name: "Europe 2 Running",        tag: "Course · Tempo",       color: 3, url: "https://wr.lmn.fm/vr-wr22.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=2022" },
+    { name: "Europe 2 Duos",           tag: "Duos",                 color: 7, url: "https://wr.lmn.fm/vr-wr23.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=2023" },
+    { name: "Europe 2 Soul / R'n'B",   tag: "Soul · R'n'B",         color: 5, url: "https://wr.lmn.fm/vr-wr24.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=2024" },
+    { name: "Europe 2 Home",           tag: "À la maison",          color: 3, url: "https://wr.lmn.fm/vr-wr25.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=2025" },
+    { name: "Work",                    tag: "Concentration",        color: 8, url: "https://wr.lmn.fm/vr-wr26.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=2026" },
+    { name: "Europe 2 Zen",            tag: "Détente",              color: 6, url: "https://wr.lmn.fm/vr-wr27.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=2027" },
     // ── RFM ─────────────────────────────────────────────────────────────────
     { name: "RFM Collector",           tag: "Collector",            color: 4, url: "https://rfm.lmn.fm/rfm-wr1.mp3" },
     { name: "RFM Night Fever",         tag: "Disco · Funk",         color: 5, url: "https://rfm.lmn.fm/rfm-wr2.mp3" },
@@ -528,22 +593,83 @@
     { name: "RFM Party 80",            tag: "Fête · Années 80",     color: 6, url: "https://rfm.lmn.fm/rfm-wr30.mp3" },
   ];
 
-  const audio     = document.getElementById("audio");
-  const playBtn   = document.getElementById("playBtn");
-  const player    = document.getElementById("player");
-  const nowName   = document.getElementById("nowName");
-  const nowStatus = document.getElementById("nowStatus");
-  const list      = document.getElementById("list");
-  const search    = document.getElementById("q");
-  const volInput  = document.getElementById("vol");
-  const wave      = document.getElementById("wave");
+  const audio       = document.getElementById("audio");
+  const playBtn     = document.getElementById("playBtn");
+  const player      = document.getElementById("player");
+  const nowName     = document.getElementById("nowName");
+  const nowTrack    = document.getElementById("nowTrack");
+  const nowArtist   = document.getElementById("nowArtist");
+  const nowStatus   = document.getElementById("nowStatus");
+  const list        = document.getElementById("list");
+  const search      = document.getElementById("q");
+  const volInput    = document.getElementById("vol");
+  const wave        = document.getElementById("wave");
+  const playerArtImg         = document.getElementById("playerArtImg");
+  const playerArtPlaceholder = document.getElementById("playerArtPlaceholder");
 
   // Waveform bars (decorative)
   wave.innerHTML = Array.from({length: 42}, () => "<span></span>").join("");
 
-  let current = null;
+  let current     = null;
+  let metaTimer   = null;
+  let lastTrackId = null;
 
-  // Restore saved state
+  // ── Metadata polling ────────────────────────────────────────────────────────
+  async function fetchMeta() {
+    const s = STATIONS[current];
+    if (!s || !s.metaUrl) return;
+    try {
+      const res  = await fetch(s.metaUrl);
+      const data = await res.json();
+      const np   = (data.nowplaying || []).find(t => t.status === "playing") || data.nowplaying?.[0];
+      if (!np) return;
+
+      // Only update UI if track changed
+      if (np.id === lastTrackId) return;
+      lastTrackId = np.id;
+
+      nowTrack.textContent  = np.title  || "—";
+      nowArtist.textContent = np.artist || "";
+
+      // Album art
+      if (np.imageUrl) {
+        const img = new Image();
+        img.onload = () => {
+          playerArtImg.src = np.imageUrl;
+          playerArtImg.classList.remove("hidden");
+          playerArtPlaceholder.style.display = "none";
+        };
+        img.onerror = clearArt;
+        img.src = np.imageUrl;
+      } else {
+        clearArt();
+      }
+    } catch (e) {
+      // Silent fail — no meta available
+    }
+  }
+
+  function clearArt() {
+    playerArtImg.classList.add("hidden");
+    playerArtImg.src = "";
+    playerArtPlaceholder.style.display = "";
+  }
+
+  function startMetaPolling() {
+    stopMetaPolling();
+    fetchMeta();
+    metaTimer = setInterval(fetchMeta, 30000);
+  }
+
+  function stopMetaPolling() {
+    if (metaTimer) { clearInterval(metaTimer); metaTimer = null; }
+    lastTrackId = null;
+    nowTrack.textContent  = "—";
+    nowArtist.textContent = "";
+    clearArt();
+  }
+
+  // ── Restore saved state ─────────────────────────────────────────────────────
   const saved = JSON.parse(localStorage.getItem("radio.state") || "{}");
   audio.volume = typeof saved.volume === "number" ? saved.volume : 0.8;
   volInput.value = audio.volume;
@@ -606,6 +732,7 @@
     nowName.textContent = s.name;
     nowStatus.textContent = s.tag;
     player.classList.remove("is-playing");
+    stopMetaPolling();
     renderList(search.value);
     localStorage.setItem("radio.state", JSON.stringify({
       stationIndex: i,
@@ -624,6 +751,7 @@
         player.classList.add("is-playing");
         nowStatus.textContent = "En direct · " + (STATIONS[current]?.tag ?? "");
         renderList(search.value);
+        if (STATIONS[current]?.metaUrl) startMetaPolling();
       })
       .catch(err => {
         player.classList.remove("is-loading", "is-playing");
@@ -636,6 +764,7 @@
   function pause() {
     audio.pause();
     player.classList.remove("is-playing");
+    stopMetaPolling();
     if (current !== null) {
       nowStatus.textContent = "En pause";
     }
@@ -690,12 +819,14 @@
     player.classList.add("is-playing");
     nowStatus.textContent = "En direct · " + (STATIONS[current]?.tag ?? "");
     renderList(search.value);
+    if (STATIONS[current]?.metaUrl && !metaTimer) startMetaPolling();
   });
   audio.addEventListener("pause", () => {
     player.classList.remove("is-playing");
   });
   audio.addEventListener("error", () => {
     player.classList.remove("is-playing", "is-loading");
+    stopMetaPolling();
     nowStatus.textContent = "Erreur de flux — essayez une autre station";
     renderList(search.value);
   });
