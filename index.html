@@ -48,7 +48,8 @@
     border-radius: 50%;
     filter: blur(90px);
     opacity: 0.55;
-    will-change: transform;
+    will-change: transform, background;
+    transition: background 2.5s ease;
   }
   .wallpaper::before {
     background: radial-gradient(circle, #a8c3ff 0%, transparent 60%);
@@ -445,6 +446,114 @@
     font-size: 13px;
   }
 
+  /* ── History panel ──────────────────────────── */
+  .history-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--fg-dim);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 0 4px;
+    margin-bottom: -18px;
+    transition: color .15s;
+  }
+  .history-toggle:hover { color: var(--fg); }
+  .history-toggle svg { width: 14px; height: 14px; transition: transform .3s; }
+  .history-toggle.is-open svg { transform: rotate(180deg); }
+
+  .history-panel {
+    border-radius: 18px;
+    background: var(--glass);
+    backdrop-filter: saturate(180%) blur(28px);
+    -webkit-backdrop-filter: saturate(180%) blur(28px);
+    border: 1px solid var(--glass-hair);
+    box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset, 0 8px 24px -10px rgba(20,22,28,0.15);
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height .4s cubic-bezier(.4,0,.2,1), opacity .3s;
+    opacity: 0;
+  }
+  .history-panel.is-open {
+    max-height: 420px;
+    opacity: 1;
+  }
+
+  .history-list {
+    list-style: none;
+    margin: 0;
+    padding: 6px;
+  }
+  .history-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    position: relative;
+  }
+  .history-item + .history-item::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 50px; right: 10px;
+    height: 1px;
+    background: var(--stroke-soft);
+  }
+  .history-thumb {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    background: rgba(20,22,28,0.08);
+    flex-shrink: 0;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  }
+  .history-thumb img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .history-thumb-placeholder {
+    width: 100%; height: 100%;
+    display: grid; place-items: center;
+    font-size: 16px;
+    color: var(--fg-faint);
+  }
+  .history-body {
+    flex: 1; min-width: 0;
+  }
+  .history-title {
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: -0.01em;
+  }
+  .history-artist {
+    font-size: 11.5px;
+    color: var(--fg-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .history-time {
+    font-size: 10.5px;
+    color: var(--fg-faint);
+    flex-shrink: 0;
+  }
+  .history-empty {
+    text-align: center;
+    padding: 24px 12px;
+    color: var(--fg-dim);
+    font-size: 13px;
+  }
+
   /* Station colors */
   .c-1 { background: linear-gradient(135deg, #ff6b6b, #c7324a); }
   .c-2 { background: linear-gradient(135deg, #5e8bff, #2b4fc9); }
@@ -521,6 +630,24 @@
       <path d="m20 20-3.5-3.5"/>
     </svg>
     <input id="q" type="search" placeholder="Chercher une station…" autocomplete="off" spellcheck="false"/>
+  </div>
+
+  <!-- History toggle -->
+  <button class="history-toggle" id="historyToggle" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/>
+    </svg>
+    Titres récents
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+      <path d="m6 9 6 6 6-6"/>
+    </svg>
+  </button>
+
+  <!-- History panel -->
+  <div class="history-panel" id="historyPanel" aria-hidden="true">
+    <ul class="history-list" id="historyList">
+      <li class="history-empty">Lance une station pour voir l'historique</li>
+    </ul>
   </div>
 
   <!-- Stations -->
@@ -609,6 +736,15 @@
   const wave        = document.getElementById("wave");
   const playerArtImg         = document.getElementById("playerArtImg");
   const playerArtPlaceholder = document.getElementById("playerArtPlaceholder");
+  const historyToggle = document.getElementById("historyToggle");
+  const historyPanel  = document.getElementById("historyPanel");
+  const historyList   = document.getElementById("historyList");
+  const wallpaper     = document.querySelector(".wallpaper");
+
+  // Hidden canvas for color extraction
+  const colorCanvas = document.createElement("canvas");
+  colorCanvas.width = colorCanvas.height = 24;
+  const colorCtx = colorCanvas.getContext("2d", { willReadFrequently: true });
 
   // Waveform bars (decorative)
   wave.innerHTML = Array.from({length: 42}, () => "<span></span>").join("");
@@ -616,6 +752,64 @@
   let current     = null;
   let metaTimer   = null;
   let lastTrackId = null;
+  let trackHistory = []; // [{title, artist, imageUrl, time}]
+
+  // ── Dynamic background color ─────────────────────────────────────────────────
+  function extractColor(imgUrl) {
+    return new Promise(resolve => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        try {
+          colorCtx.drawImage(img, 0, 0, 24, 24);
+          const d = colorCtx.getImageData(0, 0, 24, 24).data;
+          let r = 0, g = 0, b = 0, count = 0;
+          for (let i = 0; i < d.length; i += 16) {
+            // Skip near-white and near-black pixels
+            const brightness = (d[i] + d[i+1] + d[i+2]) / 3;
+            if (brightness > 30 && brightness < 220) {
+              r += d[i]; g += d[i+1]; b += d[i+2]; count++;
+            }
+          }
+          if (count === 0) { resolve(null); return; }
+          resolve([Math.round(r/count), Math.round(g/count), Math.round(b/count)]);
+        } catch { resolve(null); }
+      };
+      img.onerror = () => resolve(null);
+      img.src = imgUrl;
+    });
+  }
+
+  function applyDynamicColor(rgb) {
+    if (!rgb) {
+      // Reset to defaults
+      wallpaper.style.setProperty("--blob1", "radial-gradient(circle, #a8c3ff 0%, transparent 60%)");
+      wallpaper.style.setProperty("--blob2", "radial-gradient(circle, #ffb088 0%, transparent 60%)");
+      document.documentElement.style.removeProperty("--accent");
+      return;
+    }
+    const [r, g, b] = rgb;
+    // Make a lighter tint for blob1 and warmer complement for blob2
+    const blob1 = `radial-gradient(circle, rgba(${r},${g},${b},0.7) 0%, transparent 60%)`;
+    const blob2 = `radial-gradient(circle, rgba(${255-r+80},${255-g+80},${255-b+80},0.5) 0%, transparent 60%)`;
+    // Apply via inline style injected as CSS custom property override
+    document.documentElement.style.setProperty("--dyn-blob1", blob1);
+    document.documentElement.style.setProperty("--dyn-blob2", blob2);
+    document.documentElement.style.setProperty("--accent", `rgb(${Math.min(r+20,255)},${Math.min(g+20,255)},${Math.min(b+20,255)})`);
+    // Update pseudo-element backgrounds via a dynamic <style> tag
+    let dynStyle = document.getElementById("dynStyle");
+    if (!dynStyle) { dynStyle = document.createElement("style"); dynStyle.id = "dynStyle"; document.head.appendChild(dynStyle); }
+    dynStyle.textContent = `
+      .wallpaper::before { background: ${blob1} !important; }
+      .wallpaper::after  { background: ${blob2} !important; }
+    `;
+  }
+
+  function resetDynamicColor() {
+    const dynStyle = document.getElementById("dynStyle");
+    if (dynStyle) dynStyle.textContent = "";
+    document.documentElement.style.removeProperty("--accent");
+  }
 
   // ── Metadata polling ────────────────────────────────────────────────────────
   async function fetchMeta() {
@@ -624,7 +818,8 @@
     try {
       const res  = await fetch(s.metaUrl);
       const data = await res.json();
-      const np   = (data.nowplaying || []).find(t => t.status === "playing") || data.nowplaying?.[0];
+      const all  = data.nowplaying || [];
+      const np   = all.find(t => t.status === "playing") || all[0];
       if (!np) return;
 
       // Only update UI if track changed
@@ -634,18 +829,40 @@
       nowTrack.textContent  = np.title  || "—";
       nowArtist.textContent = np.artist || "";
 
-      // Album art
+      // History: add to front, keep last 10, deduplicate by id
+      if (np.title) {
+        trackHistory = [
+          { id: np.id, title: np.title, artist: np.artist || "", imageUrl: np.imageUrl || "", time: new Date() },
+          ...trackHistory.filter(t => t.id !== np.id)
+        ].slice(0, 10);
+
+        // Also push history items from API (status: "history")
+        const histItems = all.filter(t => t.status === "history" && t.title);
+        histItems.forEach(h => {
+          if (!trackHistory.find(t => t.id === h.id)) {
+            trackHistory.push({ id: h.id, title: h.title, artist: h.artist || "", imageUrl: h.imageUrl || "", time: new Date(h.time || Date.now()) });
+          }
+        });
+        trackHistory = trackHistory.slice(0, 10);
+        renderHistory();
+      }
+
+      // Album art + dynamic color
       if (np.imageUrl) {
         const img = new Image();
-        img.onload = () => {
+        img.onload = async () => {
           playerArtImg.src = np.imageUrl;
           playerArtImg.classList.remove("hidden");
           playerArtPlaceholder.style.display = "none";
+          // Extract color and apply to background
+          const rgb = await extractColor(np.imageUrl);
+          applyDynamicColor(rgb);
         };
-        img.onerror = clearArt;
+        img.onerror = () => { clearArt(); resetDynamicColor(); };
         img.src = np.imageUrl;
       } else {
         clearArt();
+        resetDynamicColor();
       }
     } catch (e) {
       // Silent fail — no meta available
@@ -667,10 +884,46 @@
   function stopMetaPolling() {
     if (metaTimer) { clearInterval(metaTimer); metaTimer = null; }
     lastTrackId = null;
+    trackHistory = [];
     nowTrack.textContent  = "—";
     nowArtist.textContent = "";
     clearArt();
+    resetDynamicColor();
+    renderHistory();
   }
+
+  // ── History rendering ────────────────────────────────────────────────────────
+  function renderHistory() {
+    if (trackHistory.length === 0) {
+      historyList.innerHTML = `<li class="history-empty">Aucun titre récent</li>`;
+      return;
+    }
+    historyList.innerHTML = trackHistory.map((t, idx) => {
+      const timeStr = t.time ? t.time.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) : "";
+      const isNow = idx === 0;
+      return `
+        <li class="history-item">
+          <div class="history-thumb">
+            ${t.imageUrl
+              ? `<img src="${escapeHtml(t.imageUrl)}" alt="" loading="lazy" onerror="this.parentElement.innerHTML='<div class=history-thumb-placeholder>♪</div>'" />`
+              : `<div class="history-thumb-placeholder">♪</div>`}
+          </div>
+          <div class="history-body">
+            <div class="history-title">${escapeHtml(t.title)}</div>
+            <div class="history-artist">${escapeHtml(t.artist)}</div>
+          </div>
+          <div class="history-time">${isNow ? "🎵" : timeStr}</div>
+        </li>`;
+    }).join("");
+  }
+
+  // History toggle
+  historyToggle.addEventListener("click", () => {
+    const isOpen = historyPanel.classList.toggle("is-open");
+    historyToggle.classList.toggle("is-open", isOpen);
+    historyToggle.setAttribute("aria-expanded", isOpen);
+    historyPanel.setAttribute("aria-hidden", !isOpen);
+  });
 
   // ── Restore saved state ─────────────────────────────────────────────────────
   const saved = JSON.parse(localStorage.getItem("radio.state") || "{}");
