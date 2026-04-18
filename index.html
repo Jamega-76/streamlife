@@ -542,6 +542,14 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
+  .history-station {
+    font-size: 10.5px;
+    color: var(--fg-faint);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 1px;
+  }
   .history-time {
     font-size: 10.5px;
     color: var(--fg-faint);
@@ -832,7 +840,7 @@
       // History: add to front, keep last 10, deduplicate by id
       if (np.title) {
         trackHistory = [
-          { id: np.id, title: np.title, artist: np.artist || "", imageUrl: np.imageUrl || "", time: new Date() },
+          { id: np.id, title: np.title, artist: np.artist || "", imageUrl: np.imageUrl || "", time: new Date(), station: s.name },
           ...trackHistory.filter(t => t.id !== np.id)
         ].slice(0, 10);
 
@@ -840,7 +848,7 @@
         const histItems = all.filter(t => t.status === "history" && t.title);
         histItems.forEach(h => {
           if (!trackHistory.find(t => t.id === h.id)) {
-            trackHistory.push({ id: h.id, title: h.title, artist: h.artist || "", imageUrl: h.imageUrl || "", time: new Date(h.time || Date.now()) });
+            trackHistory.push({ id: h.id, title: h.title, artist: h.artist || "", imageUrl: h.imageUrl || "", time: new Date(h.time || Date.now()), station: s.name });
           }
         });
         trackHistory = trackHistory.slice(0, 10);
@@ -911,6 +919,7 @@
           <div class="history-body">
             <div class="history-title">${escapeHtml(t.title)}</div>
             <div class="history-artist">${escapeHtml(t.artist)}</div>
+            ${t.station ? `<div class="history-station">${escapeHtml(t.station)}</div>` : ""}
           </div>
           <div class="history-time">${isNow ? "🎵" : timeStr}</div>
         </li>`;
