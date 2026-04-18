@@ -711,6 +711,97 @@
     transition: background .15s;
   }
   .quiz-close:hover { background: rgba(20,22,28,0.14); }
+
+  /* ── Filters ────────────────────────────────── */
+  .filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .filter-btn {
+    padding: 6px 14px;
+    border-radius: 50px;
+    border: 1.5px solid rgba(20,22,28,0.12);
+    background: rgba(255,255,255,0.5);
+    font: inherit; font-size: 13px; font-weight: 500;
+    color: var(--fg-dim);
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .filter-btn:hover { border-color: var(--accent); color: var(--fg); }
+  .filter-btn.is-active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 600;
+  }
+
+  /* ── Favorites star ─────────────────────────── */
+  .station-fav {
+    width: 24px; height: 24px;
+    border: 0; background: none;
+    color: var(--fg-faint);
+    font-size: 16px; line-height: 1;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: color .15s, transform .2s;
+    padding: 0;
+    display: grid; place-items: center;
+  }
+  .station-fav:hover { color: #f5a623; transform: scale(1.2); }
+  .station-fav.is-fav { color: #f5a623; }
+
+  /* ── Mood banner ────────────────────────────── */
+  .mood-banner {
+    border-radius: 16px;
+    background: rgba(255,255,255,0.5);
+    border: 1px solid rgba(255,255,255,0.8);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 2px 8px rgba(20,22,28,0.06);
+  }
+  .mood-emoji { font-size: 24px; flex-shrink: 0; }
+  .mood-text { flex: 1; min-width: 0; }
+  .mood-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-faint); }
+  .mood-station { font-size: 13px; font-weight: 600; letter-spacing: -0.01em; color: var(--fg); }
+  .mood-play {
+    padding: 6px 14px;
+    border-radius: 50px; border: 0;
+    background: #111418; color: #fff;
+    font: inherit; font-size: 12px; font-weight: 600;
+    cursor: pointer;
+    transition: transform .15s;
+    flex-shrink: 0;
+  }
+  .mood-play:hover { transform: scale(1.05); }
+
+  /* ── Konami ──────────────────────────────────── */
+  @keyframes konamiBlob {
+    0%   { transform: translate(0,0) scale(1) rotate(0deg); }
+    25%  { transform: translate(15vmax,-10vmax) scale(1.4) rotate(90deg); }
+    50%  { transform: translate(-10vmax,12vmax) scale(0.8) rotate(180deg); }
+    75%  { transform: translate(8vmax,-8vmax) scale(1.6) rotate(270deg); }
+    100% { transform: translate(0,0) scale(1) rotate(360deg); }
+  }
+  .konami-active .wallpaper::before { animation: konamiBlob 1.2s ease-in-out 3 !important; }
+  .konami-active .wallpaper::after  { animation: konamiBlob 1.5s ease-in-out 3 reverse !important; }
+  .konami-toast {
+    position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
+    background: #111418; color: #fff;
+    padding: 10px 20px; border-radius: 50px;
+    font-size: 14px; font-weight: 600;
+    z-index: 200; white-space: nowrap;
+    animation: toastIn .3s ease forwards;
+  }
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+  }
+
+  @media (max-width: 520px) {
     .volume { display: none; }
     .player-top { grid-template-columns: 56px 1fr; }
   }
@@ -776,6 +867,24 @@
       <div class="quiz-banner-sub">5 questions · résultat immédiat</div>
     </div>
     <span class="quiz-banner-arrow">→</span>
+  </div>
+
+  <!-- Mood du jour -->
+  <div class="mood-banner" id="moodBanner">
+    <span class="mood-emoji" id="moodEmoji">🌅</span>
+    <div class="mood-text">
+      <div class="mood-label">Mood du moment</div>
+      <div class="mood-station" id="moodStation">Chargement…</div>
+    </div>
+    <button class="mood-play" id="moodPlay">Écouter</button>
+  </div>
+
+  <!-- Filtres -->
+  <div class="filters" role="group" aria-label="Filtrer les stations">
+    <button class="filter-btn is-active" data-filter="all">Tout</button>
+    <button class="filter-btn" data-filter="europe2">Europe 2</button>
+    <button class="filter-btn" data-filter="rfm">RFM</button>
+    <button class="filter-btn" data-filter="favs">⭐ Favoris</button>
   </div>
 
   <!-- Search -->
@@ -1069,14 +1178,42 @@
   audio.volume = typeof saved.volume === "number" ? saved.volume : 0.8;
   volInput.value = audio.volume;
 
+  // ── Favorites ────────────────────────────────────────────────────────────────
+  let favs = new Set(JSON.parse(localStorage.getItem("radio.favs") || "[]"));
+  function saveFavs() { localStorage.setItem("radio.favs", JSON.stringify([...favs])); }
+  function toggleFav(i) {
+    if (favs.has(i)) favs.delete(i); else favs.add(i);
+    saveFavs();
+    renderList();
+  }
+
+  // ── Filter state ─────────────────────────────────────────────────────────────
+  let activeFilter = "all";
+
+  document.querySelectorAll(".filter-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      activeFilter = btn.dataset.filter;
+      document.querySelectorAll(".filter-btn").forEach(b => b.classList.toggle("is-active", b === btn));
+      renderList(search.value);
+    });
+  });
+
   function renderList(filter = "") {
     const f = filter.trim().toLowerCase();
-    const items = STATIONS
-      .map((s, i) => ({ s, i }))
-      .filter(({s}) => !f || s.name.toLowerCase().includes(f) || s.tag.toLowerCase().includes(f));
+    let items = STATIONS.map((s, i) => ({ s, i }));
+
+    // Brand filter
+    if (activeFilter === "europe2") items = items.filter(({s}) => s.name.toLowerCase().includes("europe 2") || s.name.toLowerCase() === "work");
+    else if (activeFilter === "rfm")  items = items.filter(({s}) => s.name.toLowerCase().startsWith("rfm"));
+    else if (activeFilter === "favs") items = items.filter(({_, i}) => favs.has(i));
+
+    // Search filter
+    if (f) items = items.filter(({s}) => s.name.toLowerCase().includes(f) || s.tag.toLowerCase().includes(f));
 
     if (items.length === 0) {
-      list.innerHTML = `<li class="empty">Aucune station ne correspond à « ${filter} »</li>`;
+      list.innerHTML = activeFilter === "favs"
+        ? `<li class="empty">⭐ Aucun favori pour l'instant — clique sur une étoile !</li>`
+        : `<li class="empty">Aucune station ne correspond à « ${filter} »</li>`;
       return;
     }
 
@@ -1095,6 +1232,7 @@
           </div>
           <div class="station-tag">${escapeHtml(s.tag)}${s.wr ? ` · WR${s.wr}` : ""}</div>
         </div>
+        <button class="station-fav ${favs.has(i) ? 'is-fav' : ''}" data-fav="${i}" aria-label="${favs.has(i) ? 'Retirer des favoris' : 'Ajouter aux favoris'}">★</button>
         <button class="station-action" aria-label="${current === i ? "Pause" : "Lecture"} ${escapeHtml(s.name)}">
           ${current === i && player.classList.contains("is-playing")
             ? `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6.5" y="5" width="4" height="14" rx="1.2"/><rect x="13.5" y="5" width="4" height="14" rx="1.2"/></svg>`
@@ -1102,6 +1240,14 @@
         </button>
       </li>
     `).join("");
+
+    // Fav click handler
+    list.querySelectorAll(".station-fav").forEach(btn => {
+      btn.addEventListener("click", e => {
+        e.stopPropagation();
+        toggleFav(Number(btn.dataset.fav));
+      });
+    });
   }
 
   function initials(name) {
@@ -1464,6 +1610,51 @@
   document.getElementById("quizBanner").addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") openQuiz(); });
   document.getElementById("quizClose").addEventListener("click", closeQuiz);
   quizOverlay.addEventListener("click", e => { if (e.target === quizOverlay) closeQuiz(); });
+
+  // ── Mood du jour ─────────────────────────────────────────────────────────────
+  const MOOD_SCHEDULE = [
+    { from:  5, to:  8, emoji: "🌅", label: "Réveil en douceur",      idx: 2  }, // Acoustic
+    { from:  8, to: 10, emoji: "☀️", label: "Bonne énergie du matin", idx: 3  }, // Hits
+    { from: 10, to: 12, emoji: "💻", label: "Concentration max",       idx: 25 }, // Work
+    { from: 12, to: 14, emoji: "🍽️", label: "Pause déj' feel good",   idx: 5  }, // Mix
+    { from: 14, to: 17, emoji: "⚡", label: "Coup de boost",           idx: 10 }, // Cardio
+    { from: 17, to: 19, emoji: "🚗", label: "Retour à la maison",      idx: 51 }, // RFM On the Road
+    { from: 19, to: 21, emoji: "🍷", label: "Soirée détente",          idx: 26 }, // Zen
+    { from: 21, to: 23, emoji: "🌙", label: "Nuit douce",              idx: 32 }, // RFM Lounge
+    { from: 23, to: 24, emoji: "🕺", label: "Nuit fever",              idx: 28 }, // RFM Night Fever
+    { from:  0, to:  5, emoji: "🌃", label: "Nuit profonde",           idx: 27 }, // RFM Collector
+  ];
+  function initMood() {
+    const h = new Date().getHours();
+    const mood = MOOD_SCHEDULE.find(m => h >= m.from && h < m.to) || MOOD_SCHEDULE[0];
+    const s = STATIONS[mood.idx];
+    if (!s) return;
+    document.getElementById("moodEmoji").textContent = mood.emoji;
+    document.getElementById("moodStation").textContent = `${mood.label} · ${s.name}`;
+    document.getElementById("moodPlay").addEventListener("click", () => selectStation(mood.idx, true));
+  }
+  initMood();
+
+  // ── Konami easter egg ─────────────────────────────────────────────────────────
+  const KONAMI = ["ArrowUp","ArrowUp","ArrowDown","ArrowDown","ArrowLeft","ArrowRight","ArrowLeft","ArrowRight","b","a"];
+  let konamiPos = 0;
+  document.addEventListener("keydown", e => {
+    if (e.key === KONAMI[konamiPos]) {
+      konamiPos++;
+      if (konamiPos === KONAMI.length) {
+        konamiPos = 0;
+        document.body.classList.add("konami-active");
+        const toast = document.createElement("div");
+        toast.className = "konami-toast";
+        toast.textContent = "🎮 KONAMI CODE ! +30 vies radio";
+        document.body.appendChild(toast);
+        setTimeout(() => { document.body.classList.remove("konami-active"); toast.remove(); }, 4000);
+      }
+    } else {
+      konamiPos = e.key === KONAMI[0] ? 1 : 0;
+    }
+  });
+
   renderList();
   if (typeof saved.stationIndex === "number" && STATIONS[saved.stationIndex]) {
     // Pré-sélectionne sans démarrer (les navigateurs bloquent l'autoplay sans interaction)
