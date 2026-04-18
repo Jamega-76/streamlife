@@ -749,11 +749,6 @@
   const historyList   = document.getElementById("historyList");
   const wallpaper     = document.querySelector(".wallpaper");
 
-  // Hidden canvas for color extraction
-  const colorCanvas = document.createElement("canvas");
-  colorCanvas.width = colorCanvas.height = 24;
-  const colorCtx = colorCanvas.getContext("2d", { willReadFrequently: true });
-
   // Waveform bars (decorative)
   wave.innerHTML = Array.from({length: 42}, () => "<span></span>").join("");
 
@@ -763,60 +758,45 @@
   let trackHistory = []; // [{title, artist, imageUrl, time}]
 
   // ── Dynamic background color ─────────────────────────────────────────────────
-  function extractColor(imgUrl) {
-    return new Promise(resolve => {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.onload = () => {
-        try {
-          colorCtx.drawImage(img, 0, 0, 24, 24);
-          const d = colorCtx.getImageData(0, 0, 24, 24).data;
-          let r = 0, g = 0, b = 0, count = 0;
-          for (let i = 0; i < d.length; i += 16) {
-            // Skip near-white and near-black pixels
-            const brightness = (d[i] + d[i+1] + d[i+2]) / 3;
-            if (brightness > 30 && brightness < 220) {
-              r += d[i]; g += d[i+1]; b += d[i+2]; count++;
-            }
-          }
-          if (count === 0) { resolve(null); return; }
-          resolve([Math.round(r/count), Math.round(g/count), Math.round(b/count)]);
-        } catch { resolve(null); }
-      };
-      img.onerror = () => resolve(null);
-      img.src = imgUrl;
-    });
-  }
+  // Couleurs directement issues des classes .c-1 à .c-8 — pas de CORS
+  const COLOR_MAP = {
+    1: [255, 107, 107],   // rouge
+    2: [94,  139, 255],   // bleu
+    3: [255, 167,  81],   // orange
+    4: [46,  204, 113],   // vert
+    5: [165, 107, 255],   // violet
+    6: [23,  195, 178],   // teal
+    7: [255, 140, 195],   // rose
+    8: [74,   86, 104],   // ardoise
+    9: [255, 209, 102],   // jaune
+  };
 
-  function applyDynamicColor(rgb) {
-    if (!rgb) {
-      // Reset to defaults
-      wallpaper.style.setProperty("--blob1", "radial-gradient(circle, #a8c3ff 0%, transparent 60%)");
-      wallpaper.style.setProperty("--blob2", "radial-gradient(circle, #ffb088 0%, transparent 60%)");
-      document.documentElement.style.removeProperty("--accent");
-      return;
-    }
+  function applyDynamicColor(colorIndex) {
+    const rgb = COLOR_MAP[colorIndex];
+    if (!rgb) { resetDynamicColor(); return; }
     const [r, g, b] = rgb;
-    // Make a lighter tint for blob1 and warmer complement for blob2
-    const blob1 = `radial-gradient(circle, rgba(${r},${g},${b},0.7) 0%, transparent 60%)`;
-    const blob2 = `radial-gradient(circle, rgba(${255-r+80},${255-g+80},${255-b+80},0.5) 0%, transparent 60%)`;
-    // Apply via inline style injected as CSS custom property override
-    document.documentElement.style.setProperty("--dyn-blob1", blob1);
-    document.documentElement.style.setProperty("--dyn-blob2", blob2);
-    document.documentElement.style.setProperty("--accent", `rgb(${Math.min(r+20,255)},${Math.min(g+20,255)},${Math.min(b+20,255)})`);
-    // Update pseudo-element backgrounds via a dynamic <style> tag
+    const blob1 = `radial-gradient(circle, rgba(${r},${g},${b},0.65) 0%, transparent 60%)`;
+    // Complémentaire adoucie pour le second blob
+    const r2 = Math.round(r * 0.4 + (255 - r) * 0.6);
+    const g2 = Math.round(g * 0.4 + (255 - g) * 0.6);
+    const b2 = Math.round(b * 0.4 + (255 - b) * 0.6);
+    const blob2 = `radial-gradient(circle, rgba(${r2},${g2},${b2},0.5) 0%, transparent 60%)`;
     let dynStyle = document.getElementById("dynStyle");
     if (!dynStyle) { dynStyle = document.createElement("style"); dynStyle.id = "dynStyle"; document.head.appendChild(dynStyle); }
     dynStyle.textContent = `
-      .wallpaper::before { background: ${blob1} !important; }
-      .wallpaper::after  { background: ${blob2} !important; }
+      .wallpaper::before { background: ${blob1} !important; transition: background 2s ease; }
+      .wallpaper::after  { background: ${blob2} !important; transition: background 2s ease; }
     `;
+    document.documentElement.style.setProperty("--accent", `rgb(${r},${g},${b})`);
   }
 
   function resetDynamicColor() {
     const dynStyle = document.getElementById("dynStyle");
-    if (dynStyle) dynStyle.textContent = "";
-    document.documentElement.style.removeProperty("--accent");
+    if (dynStyle) dynStyle.textContent = `
+      .wallpaper::before { background: radial-gradient(circle, #a8c3ff 0%, transparent 60%) !important; transition: background 2s ease; }
+      .wallpaper::after  { background: radial-gradient(circle, #ffb088 0%, transparent 60%) !important; transition: background 2s ease; }
+    `;
+    document.documentElement.style.setProperty("--accent", "#0a84ff");
   }
 
   // ── Metadata polling ────────────────────────────────────────────────────────
@@ -855,22 +835,18 @@
         renderHistory();
       }
 
-      // Album art + dynamic color
+      // Album art
       if (np.imageUrl) {
         const img = new Image();
-        img.onload = async () => {
+        img.onload = () => {
           playerArtImg.src = np.imageUrl;
           playerArtImg.classList.remove("hidden");
           playerArtPlaceholder.style.display = "none";
-          // Extract color and apply to background
-          const rgb = await extractColor(np.imageUrl);
-          applyDynamicColor(rgb);
         };
-        img.onerror = () => { clearArt(); resetDynamicColor(); };
+        img.onerror = clearArt;
         img.src = np.imageUrl;
       } else {
         clearArt();
-        resetDynamicColor();
       }
     } catch (e) {
       // Silent fail — no meta available
@@ -896,7 +872,6 @@
     nowTrack.textContent  = "—";
     nowArtist.textContent = "";
     clearArt();
-    resetDynamicColor();
     renderHistory();
   }
 
@@ -1003,6 +978,7 @@
     nowStatus.textContent = s.tag;
     player.classList.remove("is-playing");
     stopMetaPolling();
+    applyDynamicColor(s.color);
     renderList(search.value);
     localStorage.setItem("radio.state", JSON.stringify({
       stationIndex: i,
