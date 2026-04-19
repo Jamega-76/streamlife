@@ -1129,11 +1129,11 @@
         <div class="playing-chip" aria-hidden="true"><i></i><i></i><i></i></div>
         <div class="station-name">${escapeHtml(s.name)}</div>
         <div class="station-tag">${escapeHtml(s.tag)}${s.wr ? ` · WR${s.wr}` : ""}</div>
-        <button class="fav" data-fav="${i}" aria-label="Favori" tabindex="-1">
+        <span class="fav" data-fav="${i}" role="button" aria-label="Favori" tabindex="0">
           <svg viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 2l2.9 6.9L22 10l-5.5 4.8L18.2 22 12 18.3 5.8 22l1.7-7.2L2 10l7.1-1.1z"/>
           </svg>
-        </button>
+        </span>
       </button>`;
     }).join("");
   }
@@ -1417,7 +1417,12 @@
       return;
     }
     const row = e.target.closest(".station");
-    if (row) selectStation(Number(row.dataset.i), true);
+    if (row) {
+      selectStation(Number(row.dataset.i), true);
+      // Ferme la sheet sur mobile après sélection
+      library.classList.remove("is-open");
+      sheetOverlay.classList.remove("is-open");
+    }
   });
 
   search.addEventListener("input", renderList);
