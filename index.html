@@ -957,22 +957,20 @@
 
   function renderLiveGrid() {
     const items = visibleStations();
-    list.innerHTML = `<div class="live-grid">${
-      items.map(({ s, i }) => {
-        const d = liveData[i] || {};
-        const grad = `linear-gradient(135deg, rgb(${s.accent}), rgba(${s.accent},0.5))`;
-        const coverHtml = d.imageUrl
-          ? `<img src="${escapeHtml(d.imageUrl)}" alt="" loading="lazy" onerror="this.style.display='none'" />`
-          : `<div class="cover-placeholder" style="background:${grad};width:100%;height:100%;display:grid;place-items:center;">${initials(s.name)}</div>`;
-        return `
-          <div class="live-card" data-i="${i}">
-            <div class="live-card-cover">${coverHtml}</div>
-            <div class="live-card-station">${escapeHtml(s.name)}</div>
-            <div class="live-card-track">${escapeHtml(d.title || '—')}</div>
-            <div class="live-card-artist">${escapeHtml(d.artist || '')}</div>
-          </div>`;
-      }).join("")
-    }</div>`;
+    list.innerHTML = items.map(({ s, i }) => {
+      const d = liveData[i] || {};
+      const grad = `linear-gradient(135deg, rgb(${s.accent}), rgba(${s.accent},0.5))`;
+      const coverHtml = d.imageUrl
+        ? `<img src="${escapeHtml(d.imageUrl)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'" /><div class="cover-placeholder" style="display:none;background:${grad};width:100%;height:100%;place-items:center;">${initials(s.name)}</div>`
+        : `<div class="cover-placeholder" style="background:${grad};width:100%;height:100%;display:grid;place-items:center;">${initials(s.name)}</div>`;
+      return `
+        <div class="live-card" data-i="${i}">
+          <div class="live-card-cover">${coverHtml}</div>
+          <div class="live-card-station">${escapeHtml(s.name)}</div>
+          <div class="live-card-track">${escapeHtml(d.title || '—')}</div>
+          <div class="live-card-artist">${escapeHtml(d.artist || '')}</div>
+        </div>`;
+    }).join("");
 
     // Click on live card → select station
     list.querySelectorAll(".live-card").forEach(card => {
@@ -984,7 +982,7 @@
     isLiveView = true;
     liveToggle.classList.add("is-live");
     liveToggle.setAttribute("aria-pressed", "true");
-    list.innerHTML = `<div class="live-grid"><div class="live-card-loading">Chargement des titres en cours…</div></div>`;
+    list.innerHTML = `<div class="live-card-loading">Chargement des titres en cours…</div>`;
     fetchAllMeta();
     liveTimer = setInterval(fetchAllMeta, 30000);
   }
