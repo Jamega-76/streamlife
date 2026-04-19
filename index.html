@@ -480,26 +480,6 @@
     text-overflow: ellipsis;
   }
 
-  .fav {
-    position: absolute;
-    top: 14px; right: 14px;
-    width: 26px; height: 26px;
-    border-radius: 50%;
-    border: 0;
-    background: rgba(0, 0, 0, 0.35);
-    color: white;
-    display: grid; place-items: center;
-    cursor: pointer;
-    opacity: 0;
-    transition: opacity .18s, background .15s, transform .12s;
-    backdrop-filter: blur(8px);
-  }
-  .station:hover .fav, .station.is-fav .fav, .station.is-active .fav { opacity: 1; }
-  .fav:hover { background: rgba(0, 0, 0, 0.55); }
-  .fav:active { transform: scale(0.88); }
-  .fav svg { width: 13px; height: 13px; }
-  .station.is-fav .fav { background: #fff; color: #ffb200; }
-
   .playing-chip {
     position: absolute;
     bottom: 60px; left: 14px;
@@ -611,13 +591,12 @@
   }
   .history-time { font-size: 10px; color: var(--fg-faint); flex-shrink: 0; }
 
-  /* Sheet overlay (mobile only) */
+  /* Sheet overlay (mobile only) — covers only the player, NOT the library */
   .sheet-overlay {
     display: none;
     position: fixed; inset: 0;
-    z-index: 45;
-    background: rgba(0,0,0,0.35);
-    backdrop-filter: blur(2px);
+    z-index: 48;
+    background: rgba(0,0,0,0.4);
     opacity: 0;
     transition: opacity .35s ease;
     pointer-events: none;
@@ -690,7 +669,7 @@
       border-top: 1px solid var(--stroke);
       border-radius: 20px 20px 0 0;
       box-shadow: 0 -12px 40px rgba(0,0,0,0.2);
-      z-index: 50;
+      z-index: 55;
       transform: translateY(100%);
       transition: transform .38s cubic-bezier(.3,.8,.3,1);
       display: flex;
@@ -762,10 +741,6 @@
       background: rgb(var(--accent-rgb));
       flex-shrink: 0;
     }
-    /* Fav always visible on mobile */
-    .fav { opacity: 1; position: static; background: transparent; color: var(--fg-faint); width: 24px; height: 24px; }
-    .station.is-fav .fav { background: transparent; color: #ffb200; }
-
     /* ── MINI-PLAYER visible ── */
     .mini-player {
       display: flex !important;
@@ -921,7 +896,6 @@
         <button class="is-active" data-filter="all">Tout</button>
         <button data-filter="Europe 2">Europe 2</button>
         <button data-filter="RFM">RFM</button>
-        <button data-filter="fav">★ Favoris</button>
       </div>
       <div class="search">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -1027,7 +1001,6 @@
 
   let current = null;
   let currentFilter = "all";
-  let favs = new Set(JSON.parse(localStorage.getItem("radio.favs") || "[]"));
   let audioCtx, analyser, dataArray, source;
   let metaTimer = null;
   let lastTrackId = null;
@@ -1096,9 +1069,8 @@
     const q = search.value.trim().toLowerCase();
     return STATIONS
       .map((s, i) => ({ s, i }))
-      .filter(({s, i}) => {
-        if (currentFilter === "fav" && !favs.has(i)) return false;
-        if (currentFilter !== "all" && currentFilter !== "fav" && s.group !== currentFilter) return false;
+      .filter(({s}) => {
+        if (currentFilter !== "all" && s.group !== currentFilter) return false;
         if (q && !s.name.toLowerCase().includes(q) && !s.tag.toLowerCase().includes(q)) return false;
         return true;
       });
@@ -1114,7 +1086,7 @@
               <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
             </svg>
           </div>
-          ${currentFilter === "fav" ? "Aucun favori pour l'instant.<br>Survolez une station et cliquez ★." : "Aucune station ne correspond."}
+          ${"Aucune station ne correspond."}
         </div>`;
       return;
     }
@@ -1124,16 +1096,11 @@
         ? `<img src="${escapeHtml(s.logo)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block'" /><span class="initials-fallback" style="display:none">${initials(s.name)}</span>`
         : `<span class="initials-fallback">${initials(s.name)}</span>`;
       return `
-      <button class="station ${current === i ? "is-active" : ""} ${favs.has(i) ? "is-fav" : ""}" data-i="${i}" role="option">
+      <button class="station ${current === i ? "is-active" : ""}" data-i="${i}" role="option">
         <div class="station-art" style="background:${gradient}">${logoHtml}</div>
         <div class="playing-chip" aria-hidden="true"><i></i><i></i><i></i></div>
         <div class="station-name">${escapeHtml(s.name)}</div>
         <div class="station-tag">${escapeHtml(s.tag)}${s.wr ? ` · WR${s.wr}` : ""}</div>
-        <span class="fav" data-fav="${i}" role="button" aria-label="Favori" tabindex="0">
-          <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2l2.9 6.9L22 10l-5.5 4.8L18.2 22 12 18.3 5.8 22l1.7-7.2L2 10l7.1-1.1z"/>
-          </svg>
-        </span>
       </button>`;
     }).join("");
   }
@@ -1406,20 +1373,9 @@
   nextBtn.addEventListener("click", () => step(1));
 
   list.addEventListener("click", (e) => {
-    const favBtn = e.target.closest(".fav");
-    if (favBtn) {
-      e.stopPropagation(); e.preventDefault();
-      const i = Number(favBtn.dataset.fav);
-      if (favs.has(i)) { favs.delete(i); showToast("Retiré des favoris"); }
-      else             { favs.add(i);    showToast("Ajouté aux favoris ★"); }
-      localStorage.setItem("radio.favs", JSON.stringify([...favs]));
-      renderList();
-      return;
-    }
     const row = e.target.closest(".station");
     if (row) {
       selectStation(Number(row.dataset.i), true);
-      // Ferme la sheet sur mobile après sélection
       library.classList.remove("is-open");
       sheetOverlay.classList.remove("is-open");
     }
