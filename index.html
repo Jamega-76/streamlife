@@ -591,216 +591,55 @@
   }
   .history-time { font-size: 10px; color: var(--fg-faint); flex-shrink: 0; }
 
-  /* Sheet overlay (mobile only) — covers only the player, NOT the library */
-  .sheet-overlay {
-    display: none;
-    position: fixed; inset: 0;
-    z-index: 48;
-    background: rgba(0,0,0,0.4);
-    opacity: 0;
-    transition: opacity .35s ease;
-    pointer-events: none;
-  }
-  @media (max-width: 700px) {
-    .sheet-overlay { display: block; }
-    .sheet-overlay.is-open { opacity: 1; pointer-events: all; }
-  }
-
   /* ── Mobile responsive ───────────────────────── */
   @media (max-width: 700px) {
-    body { overflow: hidden; }
+    body { overflow-y: auto; }
 
-    /* App = single column, full height */
     .app {
-      grid-template-columns: 1fr;
-      grid-template-rows: 1fr;
-      height: 100%;
-      overflow: hidden;
+      display: block;
+      height: auto;
     }
-
-    /* ── NOW PLAYING — scrollable, padded for mini-player ── */
-    .now {
-      grid-row: 1;
-      padding: 20px 20px 96px; /* 96px = mini-player height */
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    /* Brand stays compact */
-    .brand { margin-bottom: 0; }
-
-    /* Artwork smaller on mobile */
-    .art {
-      max-width: 220px;
-      margin: 0 auto;
-    }
-    .art-initials { font-size: 64px; }
-
-    /* Meta tighter */
-    .now-meta { gap: 3px; min-height: auto; }
-    .now-title { font-size: 17px; }
-
-    /* Wave less tall */
-    .wave { height: 32px; }
-
-    /* Transport compact */
-    .transport { gap: 12px; padding: 0; }
+    .now { padding: 24px 20px 16px; }
+    .art { max-width: 200px; margin: 0 auto; }
+    .art-initials { font-size: 60px; }
+    .now-title { font-size: 18px; }
+    .wave { height: 30px; }
+    .transport { gap: 12px; }
     .play-btn { width: 56px; height: 56px; }
     .play-btn svg { width: 22px; height: 22px; }
     .t-btn { width: 38px; height: 38px; }
-
-    /* Volume row stays */
-    .volume-row { padding: 0; }
-
-    /* History panel visible on mobile too */
     .history-panel { display: flex !important; }
 
-    /* ── LIBRARY — slide-up sheet ── */
-    .library {
-      position: fixed;
-      inset: 0;
-      top: auto;
-      height: 78vh;
-      padding: 0 16px 24px;
-      background: var(--bg-1);
-      border-top: 1px solid var(--stroke);
-      border-radius: 20px 20px 0 0;
-      box-shadow: 0 -12px 40px rgba(0,0,0,0.2);
-      z-index: 55;
-      transform: translateY(100%);
-      transition: transform .38s cubic-bezier(.3,.8,.3,1);
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      overflow: hidden;
-    }
-    .library.is-open { transform: translateY(0); }
-
-    /* Drag handle */
-    .library::before {
-      content: "";
-      display: block;
-      width: 36px; height: 4px;
-      border-radius: 2px;
-      background: var(--fg-faint);
-      margin: 12px auto 0;
-      flex-shrink: 0;
-    }
-
-    /* Lib header compact */
-    .lib-head {
-      flex-shrink: 0;
-      flex-wrap: nowrap;
-      gap: 8px;
-    }
-    .segmented button { padding: 6px 10px; font-size: 12px; }
-    .search { min-width: 0; max-width: none; flex: 1; }
-
-    /* Station list mobile — sans logo, liste compacte */
+    .library { padding: 0 20px 40px; height: auto; min-height: 0; }
     .stations {
-      flex: 1;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
+      height: auto;
+      overflow-y: visible;
       display: flex;
       flex-direction: column;
-      gap: 2px;
-      padding-bottom: 8px;
+      gap: 4px;
     }
     .station {
       flex-direction: row;
       align-items: center;
       gap: 12px;
-      padding: 10px 12px;
-      border-radius: 12px;
+      padding: 11px 14px;
     }
     .station-art { display: none; }
     .playing-chip { display: none !important; }
-    .station.is-active .playing-chip { display: none !important; }
-    .station-name {
-      flex: 1;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      font-size: 14px;
-    }
-    .station-tag {
-      font-size: 11px;
-      margin-top: 0;
-      white-space: nowrap;
-      color: var(--fg-dim);
-      flex-shrink: 0;
-    }
-    /* Active indicator on mobile — accent dot */
+    .station-name { flex: 1; font-size: 14px; }
+    .station-tag { margin-top: 0; font-size: 11px; flex-shrink: 0; }
     .station.is-active::before {
       content: "";
-      width: 6px; height: 6px;
-      border-radius: 50%;
+      width: 6px; height: 6px; border-radius: 50%;
       background: rgb(var(--accent-rgb));
       flex-shrink: 0;
     }
-    /* ── MINI-PLAYER visible ── */
-    .mini-player {
-      display: flex !important;
-    }
   }
-
-  /* Mini-player — hidden on desktop */
-  .mini-player {
-    display: none;
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    z-index: 60; /* above library sheet */
-    padding: 10px 16px;
-    padding-bottom: max(16px, env(safe-area-inset-bottom));
-    background: var(--surface-2);
-    backdrop-filter: blur(32px);
-    -webkit-backdrop-filter: blur(32px);
-    border-top: 1px solid var(--stroke);
-    align-items: center;
-    gap: 12px;
-    box-shadow: 0 -2px 20px rgba(0,0,0,0.1);
-  }
-  .mini-art {
-    width: 40px; height: 40px;
-    border-radius: 10px;
-    overflow: hidden;
-    flex-shrink: 0;
-    background: var(--surface);
-  }
-  .mini-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .mini-meta { flex: 1; min-width: 0; }
-  .mini-station { font-size: 10px; color: rgb(var(--accent-rgb)); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
-  .mini-title { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.01em; }
-  .mini-play {
-    width: 36px; height: 36px; border-radius: 50%;
-    border: 0; background: var(--fg); color: var(--bg-1);
-    display: grid; place-items: center;
-    cursor: pointer; flex-shrink: 0;
-    transition: transform .15s;
-  }
-  .mini-play:hover { transform: scale(1.08); }
-  .mini-play svg { width: 16px; height: 16px; }
-  .mini-play .ico-pause, .app.is-playing .mini-play .ico-play { display: none; }
-  .app.is-playing .mini-play .ico-pause { display: block; }
-  .mini-list-btn {
-    width: 36px; height: 36px; border-radius: 50%;
-    border: 1px solid var(--stroke); background: var(--surface);
-    display: grid; place-items: center;
-    cursor: pointer; flex-shrink: 0;
-    color: var(--fg-dim);
-    transition: background .15s;
-  }
-  .mini-list-btn:hover { background: var(--surface-2); }
-  .mini-list-btn svg { width: 16px; height: 16px; }
 </style>
 </head>
 <body>
 
 <div class="backdrop" aria-hidden="true"></div>
-<div class="sheet-overlay" id="sheetOverlay" aria-hidden="true"></div>
 
 <main class="app" id="app">
 
@@ -869,24 +708,6 @@
     </div>
 
   </aside>
-
-  <!-- Mini-player (mobile) -->
-  <div class="mini-player" id="miniPlayer">
-    <div class="mini-art" id="miniArt">
-      <img id="miniArtImg" src="" alt="" style="display:none" />
-    </div>
-    <div class="mini-meta">
-      <div class="mini-station" id="miniStation">—</div>
-      <div class="mini-title" id="miniTitle">Choisissez une station</div>
-    </div>
-    <button class="mini-play" id="miniPlayBtn" aria-label="Lecture/Pause">
-      <svg class="ico-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.54.84l10.2-6.5a1 1 0 0 0 0-1.68L9.54 4.66A1 1 0 0 0 8 5.5z"/></svg>
-      <svg class="ico-pause" viewBox="0 0 24 24" fill="currentColor"><rect x="6.5" y="5" width="4" height="14" rx="1.2"/><rect x="13.5" y="5" width="4" height="14" rx="1.2"/></svg>
-    </button>
-    <button class="mini-list-btn" id="miniListBtn" aria-label="Voir les stations">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
-    </button>
-  </div>
 
   <!-- RIGHT : Library -->
   <section class="library">
@@ -1014,26 +835,7 @@
 
   const historyPanel  = document.getElementById("historyPanel");
   const historyList   = document.getElementById("historyList");
-  const miniPlayer    = document.getElementById("miniPlayer");
-  const miniStation   = document.getElementById("miniStation");
-  const miniTitle     = document.getElementById("miniTitle");
-  const miniArtImg    = document.getElementById("miniArtImg");
-  const miniPlayBtn   = document.getElementById("miniPlayBtn");
-  const miniListBtn   = document.getElementById("miniListBtn");
   const library       = document.querySelector(".library");
-
-  miniPlayBtn.addEventListener("click", togglePlay);
-  miniListBtn.addEventListener("click", () => {
-    library.classList.toggle("is-open");
-    sheetOverlay.classList.toggle("is-open");
-  });
-
-  // Close sheet when clicking overlay
-  const sheetOverlay = document.getElementById("sheetOverlay");
-  sheetOverlay.addEventListener("click", () => {
-    library.classList.remove("is-open");
-    sheetOverlay.classList.remove("is-open");
-  });
 
   // Build waveform bars
   wave.innerHTML = Array.from({length: BARS}, () => "<span></span>").join("");
@@ -1167,12 +969,7 @@
       lastTrackId = np.id;
       nowTitle.textContent  = np.title  || s.tag;
       nowArtist.textContent = np.artist || "";
-      miniTitle.textContent = np.title  || s.tag;
       showCover(np.imageUrl || "");
-
-      // Update mini-player art
-      if (np.imageUrl) { miniArtImg.src = np.imageUrl; miniArtImg.style.display = "block"; }
-      else { miniArtImg.style.display = "none"; }
 
       // Build history (playing + history entries)
       if (np.title) {
@@ -1219,7 +1016,6 @@
     trackHistory = [];
     artCover.classList.remove("visible");
     nowArtist.textContent = "";
-    miniArtImg.style.display = "none";
     historyPanel.style.display = "none";
     historyList.innerHTML = "";
   }
@@ -1243,8 +1039,6 @@
     nowTitle.textContent   = s.tag;
     nowArtist.textContent  = "";
     nowSub.textContent     = "En direct";
-    miniStation.textContent = s.name;
-    miniTitle.textContent   = s.tag;
     app.classList.remove("is-playing");
     stopMetaPolling();
     showLogo(s);
@@ -1374,11 +1168,7 @@
 
   list.addEventListener("click", (e) => {
     const row = e.target.closest(".station");
-    if (row) {
-      selectStation(Number(row.dataset.i), true);
-      library.classList.remove("is-open");
-      sheetOverlay.classList.remove("is-open");
-    }
+    if (row) selectStation(Number(row.dataset.i), true);
   });
 
   search.addEventListener("input", renderList);
