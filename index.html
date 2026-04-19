@@ -3,1262 +3,863 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<meta name="description" content="Live Controler — Lecteur radio en ligne pour Europe 2 et ses 27 webradios thématiques." />
-<title>Live Controler</title>
+<title>Radio · v2</title>
 <style>
   :root {
-    --fg: rgba(20, 22, 28, 0.92);
-    --fg-dim: rgba(20, 22, 28, 0.55);
-    --fg-faint: rgba(20, 22, 28, 0.28);
-    --accent: #0a84ff;
-    --glass: rgba(255, 255, 255, 0.55);
-    --glass-strong: rgba(255, 255, 255, 0.72);
-    --glass-hair: rgba(255, 255, 255, 0.8);
+    --bg-1: #efe7dc;
+    --bg-2: #e0d6c8;
+    --fg: rgba(20, 22, 28, 0.94);
+    --fg-dim: rgba(20, 22, 28, 0.6);
+    --fg-faint: rgba(20, 22, 28, 0.3);
+    --accent: #ff6b4a;        /* teinte dynamique — écrasée en JS */
+    --accent-rgb: 255, 107, 74;
+    --surface: rgba(255, 255, 255, 0.55);
+    --surface-2: rgba(255, 255, 255, 0.7);
     --stroke: rgba(20, 22, 28, 0.08);
-    --stroke-soft: rgba(20, 22, 28, 0.05);
+    --radius-lg: 22px;
+    --radius-md: 14px;
+    --radius-sm: 10px;
+  }
+  [data-theme="dark"] {
+    --bg-1: #0e0e12;
+    --bg-2: #141419;
+    --fg: rgba(255, 255, 255, 0.96);
+    --fg-dim: rgba(255, 255, 255, 0.6);
+    --fg-faint: rgba(255, 255, 255, 0.25);
+    --surface: rgba(255, 255, 255, 0.06);
+    --surface-2: rgba(255, 255, 255, 0.1);
+    --stroke: rgba(255, 255, 255, 0.08);
   }
 
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; }
-
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", system-ui, sans-serif;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
     color: var(--fg);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.011em;
     overflow: hidden;
-    background: #f3efe8;
+    background: var(--bg-1);
+    transition: background 600ms ease;
   }
 
-  /* Animated wallpaper — macOS Sonoma-style soft gradient blobs */
-  .wallpaper {
+  /* Dynamic backdrop — tinted by current station accent */
+  .backdrop {
     position: fixed; inset: 0; z-index: 0; overflow: hidden;
     background:
-      radial-gradient(ellipse at 20% 100%, #f0bfae 0%, transparent 55%),
-      radial-gradient(ellipse at 80% 10%, #c4d5ff 0%, transparent 55%),
-      radial-gradient(ellipse at 100% 80%, #ffd89e 0%, transparent 50%),
-      linear-gradient(180deg, #ede8df 0%, #e4dfd4 100%);
+      radial-gradient(ellipse at 15% 20%, rgba(var(--accent-rgb), 0.35) 0%, transparent 55%),
+      radial-gradient(ellipse at 85% 90%, rgba(var(--accent-rgb), 0.25) 0%, transparent 55%),
+      linear-gradient(160deg, var(--bg-1) 0%, var(--bg-2) 100%);
+    transition: background 800ms ease;
   }
-  .wallpaper::before,
-  .wallpaper::after {
+  .backdrop::before, .backdrop::after {
     content: "";
     position: absolute;
     width: 70vmax; height: 70vmax;
     border-radius: 50%;
-    filter: blur(90px);
+    filter: blur(100px);
     opacity: 0.55;
-    will-change: transform, background;
-    transition: background 2.5s ease;
+    will-change: transform;
   }
-  .wallpaper::before {
-    background: radial-gradient(circle, #a8c3ff 0%, transparent 60%);
-    top: -30vmax; left: -20vmax;
-    animation: drift1 28s ease-in-out infinite alternate;
+  .backdrop::before {
+    background: radial-gradient(circle, rgba(var(--accent-rgb), 0.6) 0%, transparent 60%);
+    top: -30vmax; left: -25vmax;
+    animation: drift1 32s ease-in-out infinite alternate;
   }
-  .wallpaper::after {
-    background: radial-gradient(circle, #ffb088 0%, transparent 60%);
-    bottom: -35vmax; right: -25vmax;
-    animation: drift2 34s ease-in-out infinite alternate;
+  .backdrop::after {
+    background: radial-gradient(circle, rgba(var(--accent-rgb), 0.35) 0%, transparent 60%);
+    bottom: -35vmax; right: -30vmax;
+    animation: drift2 40s ease-in-out infinite alternate;
   }
-  @keyframes drift1 {
-    0%   { transform: translate(0, 0) scale(1); }
-    100% { transform: translate(12vmax, 8vmax) scale(1.15); }
-  }
-  @keyframes drift2 {
-    0%   { transform: translate(0, 0) scale(1); }
-    100% { transform: translate(-10vmax, -6vmax) scale(1.1); }
-  }
+  [data-theme="dark"] .backdrop { opacity: 0.7; }
 
+  @keyframes drift1 { 0%{transform:translate(0,0) scale(1);} 100%{transform:translate(12vmax,8vmax) scale(1.15);} }
+  @keyframes drift2 { 0%{transform:translate(0,0) scale(1);} 100%{transform:translate(-10vmax,-6vmax) scale(1.1);} }
+
+  /* ── App shell — split view desktop ─────── */
   .app {
-    position: relative;
-    z-index: 1;
+    position: relative; z-index: 1;
     height: 100%;
-    max-width: 720px;
-    margin: 0 auto;
-    padding: 28px 24px 48px;
-    display: flex;
-    flex-direction: column;
-    gap: 28px;
+    display: grid;
+    grid-template-columns: minmax(360px, 0.9fr) 1.1fr;
+    gap: 0;
+  }
+  @media (max-width: 900px) {
+    .app { grid-template-columns: 1fr; grid-template-rows: auto 1fr; overflow-y: auto; }
   }
 
-  /* ── Player ─────────────────────────────────── */
-  .player {
-    position: sticky;
-    top: 0;
-    border-radius: 22px;
-    padding: 14px;
-    background: var(--glass);
-    backdrop-filter: saturate(180%) blur(32px);
-    -webkit-backdrop-filter: saturate(180%) blur(32px);
-    border: 1px solid var(--glass-hair);
-    box-shadow:
-      0 1px 0 rgba(255,255,255,0.6) inset,
-      0 18px 40px -18px rgba(20,22,28,0.25),
-      0 2px 6px rgba(20,22,28,0.06);
+  /* ── LEFT : Now Playing column ──────────── */
+  .now {
+    padding: 36px 32px;
     display: flex;
     flex-direction: column;
+    gap: 22px;
+    min-width: 0;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     gap: 12px;
   }
-
-  /* top row : artwork + meta + volume */
-  .player-top {
-    display: grid;
-    grid-template-columns: 64px 1fr auto;
-    column-gap: 14px;
-    align-items: center;
+  .brand-mark {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--fg-dim);
+    text-transform: uppercase;
   }
+  .brand-mark .orb {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: conic-gradient(from 140deg, rgb(var(--accent-rgb)), #ffb088, #a8c3ff, rgb(var(--accent-rgb)));
+    box-shadow: 0 2px 6px rgba(var(--accent-rgb), 0.4);
+    transition: background 600ms;
+  }
+  .theme-toggle {
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 1px solid var(--stroke);
+    background: var(--surface);
+    backdrop-filter: blur(20px);
+    color: var(--fg);
+    cursor: pointer;
+    display: grid; place-items: center;
+    transition: background .15s, transform .12s;
+  }
+  .theme-toggle:hover { background: var(--surface-2); }
+  .theme-toggle:active { transform: scale(0.92); }
+  .theme-toggle svg { width: 16px; height: 16px; }
+  .theme-toggle .moon { display: none; }
+  [data-theme="dark"] .theme-toggle .sun { display: none; }
+  [data-theme="dark"] .theme-toggle .moon { display: block; }
 
-  /* Artwork */
-  .player-art {
-    width: 64px; height: 64px;
-    border-radius: 12px;
-    overflow: hidden;
-    background: rgba(20,22,28,0.08);
-    flex-shrink: 0;
+  /* Artwork XL */
+  .art {
     position: relative;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+    width: 100%;
+    aspect-ratio: 1;
+    max-width: 360px;
+    margin: 4px auto 0;
+    border-radius: 26px;
+    overflow: hidden;
+    display: grid; place-items: center;
+    background: linear-gradient(135deg, rgb(var(--accent-rgb)), rgba(var(--accent-rgb), 0.4));
+    box-shadow:
+      0 40px 80px -30px rgba(var(--accent-rgb), 0.6),
+      0 12px 30px -10px rgba(0, 0, 0, 0.25),
+      inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    transition: background 600ms, box-shadow 600ms, transform .35s cubic-bezier(.2,.8,.2,1);
   }
-  .player-art img {
+  .art.is-switching { transform: scale(0.96); opacity: 0.6; }
+
+  /* Station logo (default, quand pas de pochette) */
+  .art-logo {
+    position: absolute; inset: 0;
     width: 100%; height: 100%;
     object-fit: cover;
-    display: block;
+    opacity: 0;
     transition: opacity .4s ease;
   }
-  .player-art img.hidden { opacity: 0; }
-  /* placeholder initials when no art */
-  .player-art-placeholder {
+  .art-logo.visible { opacity: 1; }
+
+  /* Pochette du titre en cours (par-dessus le logo) */
+  .art-cover {
     position: absolute; inset: 0;
-    display: grid; place-items: center;
-    font-size: 20px; font-weight: 700; color: rgba(20,22,28,0.25);
-    letter-spacing: -0.02em;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity .4s ease;
+  }
+  .art-cover.visible { opacity: 1; }
+  .art-initials {
+    font-size: 108px;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    color: rgba(255,255,255,0.95);
+    text-shadow: 0 6px 30px rgba(0,0,0,0.2);
+    font-feature-settings: "ss01";
+  }
+  .art-grain {
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(circle at 30% 30%, rgba(255,255,255,0.25) 0%, transparent 40%),
+      radial-gradient(circle at 70% 80%, rgba(0,0,0,0.15) 0%, transparent 50%);
+    mix-blend-mode: overlay;
+    pointer-events: none;
+  }
+  .art-halo {
+    position: absolute; inset: -20px;
+    border-radius: 40px;
+    background: radial-gradient(circle, rgba(var(--accent-rgb), 0.5) 0%, transparent 60%);
+    filter: blur(40px);
+    opacity: 0;
+    transition: opacity 500ms;
+    pointer-events: none;
+    z-index: -1;
+  }
+  .app.is-playing .art-halo {
+    opacity: 0.7;
+    animation: haloPulse 2.5s ease-in-out infinite;
+  }
+  @keyframes haloPulse {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50%      { transform: scale(1.08); opacity: 0.8; }
   }
 
-  .player-meta {
-    min-width: 0;
+  .now-meta {
+    text-align: center;
+    display: flex; flex-direction: column; gap: 6px;
+    min-height: 60px;
+  }
+  .now-station {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgb(var(--accent-rgb));
+    transition: color 500ms;
+  }
+  .now-title {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .now-sub {
+    font-size: 13px;
+    color: var(--fg-dim);
+  }
+
+  /* Reactive waveform (24 bars, driven by AnalyserNode) */
+  .wave {
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 0 8px;
+  }
+  .wave span {
+    width: 3px; height: 4px;
+    border-radius: 2px;
+    background: var(--fg-faint);
+    transition: height 80ms ease-out, background 400ms;
+  }
+  .app.is-playing .wave span {
+    background: rgb(var(--accent-rgb));
+  }
+
+  /* Transport controls */
+  .transport {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 4px 0 2px;
+  }
+  .t-btn {
+    width: 44px; height: 44px; border-radius: 50%;
+    border: 0; background: transparent; color: var(--fg);
+    display: grid; place-items: center;
+    cursor: pointer;
+    transition: background .15s, transform .12s, color .15s;
+  }
+  .t-btn:hover { background: var(--surface); }
+  .t-btn:active { transform: scale(0.9); }
+  .t-btn:disabled { color: var(--fg-faint); cursor: default; }
+  .t-btn:disabled:hover { background: transparent; }
+  .t-btn svg { width: 18px; height: 18px; }
+  .play-btn {
+    width: 68px; height: 68px; border-radius: 50%;
+    background: var(--fg);
+    color: var(--bg-1);
+    box-shadow: 0 12px 28px -10px rgba(0,0,0,0.45);
+  }
+  .play-btn:hover { background: var(--fg); transform: scale(1.04); }
+  .play-btn svg { width: 26px; height: 26px; }
+  .play-btn .ico-pause, .app.is-playing .play-btn .ico-play { display: none; }
+  .app.is-playing .play-btn .ico-pause { display: block; }
+
+  /* Volume */
+  .volume-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 6px;
+  }
+  .volume-row svg { width: 14px; height: 14px; color: var(--fg-dim); flex-shrink: 0; }
+  .volume-row input {
+    -webkit-appearance: none; appearance: none;
+    flex: 1; height: 4px; background: var(--stroke); border-radius: 2px; outline: none;
+  }
+  .volume-row input::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%;
+    background: var(--fg);
+    cursor: pointer;
+  }
+
+  /* ── RIGHT : Library column ─────────────── */
+  .library {
+    padding: 36px 36px 36px 0;
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 18px;
+    min-width: 0;
+    min-height: 0;
   }
-  .player-station {
+  @media (max-width: 900px) {
+    .library { padding: 0 20px 32px; }
+    .now { padding: 24px 20px 12px; }
+  }
+
+  .lib-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  /* iOS segmented control */
+  .segmented {
+    display: inline-flex;
+    padding: 3px;
+    background: var(--surface);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--stroke);
+    border-radius: 10px;
+    position: relative;
+  }
+  .segmented button {
+    position: relative;
+    z-index: 1;
+    border: 0; background: transparent;
+    padding: 7px 16px;
+    font: inherit;
     font-size: 13px;
     font-weight: 500;
     color: var(--fg-dim);
-    letter-spacing: -0.01em;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .player-track {
-    font-size: 15px;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    line-height: 1.2;
-  }
-  .player-artist {
-    font-size: 13px;
-    color: var(--fg-dim);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .player-sub {
-    font-size: 11px;
-    color: var(--fg-faint);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-top: 2px;
-  }
-  .player-sub .dot {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: var(--fg-faint);
-    flex-shrink: 0;
-    transition: background .2s;
-  }
-  .player.is-playing .player-sub .dot {
-    background: #ff3b30;
-    box-shadow: 0 0 0 0 rgba(255,59,48,0.7);
-    animation: pulse 1.6s ease-out infinite;
-  }
-  @keyframes pulse {
-    0%   { box-shadow: 0 0 0 0 rgba(255,59,48,0.6); }
-    100% { box-shadow: 0 0 0 8px rgba(255,59,48,0); }
-  }
-  .player.is-loading .player-sub .dot {
-    background: var(--accent);
-    animation: loadPulse 1s ease-in-out infinite;
-  }
-  @keyframes loadPulse {
-    0%, 100% { opacity: 0.3; }
-    50% { opacity: 1; }
-  }
-
-  .volume {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding-right: 4px;
-  }
-  .volume svg { width: 16px; height: 16px; color: var(--fg-dim); flex-shrink: 0; }
-  .volume input {
-    -webkit-appearance: none; appearance: none;
-    width: 80px; height: 4px;
-    background: rgba(20,22,28,0.12);
-    border-radius: 2px;
-    outline: none;
-  }
-  .volume input::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 14px; height: 14px;
-    border-radius: 50%;
-    background: #fff;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.25), 0 0 0 0.5px rgba(0,0,0,0.1);
     cursor: pointer;
+    border-radius: 8px;
+    transition: color .2s;
+    white-space: nowrap;
   }
-  .volume input::-moz-range-thumb {
-    width: 14px; height: 14px; border: 0; border-radius: 50%;
-    background: #fff;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.25);
-    cursor: pointer;
-  }
-
-  /* bottom row: play btn + waveform */
-  .player-controls {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .play-btn {
-    width: 44px; height: 44px;
-    border-radius: 50%;
-    border: 0;
-    background: #111418;
-    color: #fff;
-    cursor: pointer;
-    display: grid; place-items: center;
-    transition: transform .15s ease, background .2s ease;
-    box-shadow: 0 6px 16px -6px rgba(0,0,0,0.5);
-    flex-shrink: 0;
-  }
-  .play-btn:hover { transform: scale(1.06); }
-  .play-btn:active { transform: scale(0.94); }
-  .play-btn svg { width: 20px; height: 20px; }
-  .play-btn .ico-pause { display: none; }
-  .player.is-playing .play-btn .ico-play { display: none; }
-  .player.is-playing .play-btn .ico-pause { display: block; }
-
-  /* waveform / equalizer */
-  .wave {
-    flex: 1;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    gap: 2.5px;
-    padding: 0 2px;
-  }
-  .wave span {
-    flex: 1;
-    height: 3px;
-    background: var(--fg-faint);
-    border-radius: 2px;
-    transition: height .25s cubic-bezier(.4,0,.2,1), background .25s;
-  }
-  .player.is-playing .wave span {
-    background: var(--fg);
-    animation: bar 1.1s ease-in-out infinite;
-  }
-  .player.is-playing .wave span:nth-child(odd)  { animation-duration: 0.9s; }
-  .player.is-playing .wave span:nth-child(3n)   { animation-duration: 1.3s; }
-  .player.is-playing .wave span:nth-child(5n)   { animation-duration: 1.5s; }
-  .player.is-playing .wave span:nth-child(7n)   { animation-duration: 0.7s; }
-  @keyframes bar {
-    0%, 100% { height: 3px; }
-    50%      { height: 22px; }
+  .segmented button.is-active { color: var(--fg); font-weight: 600; }
+  .segmented-indicator {
+    position: absolute;
+    top: 3px; left: 3px;
+    height: calc(100% - 6px);
+    background: var(--surface-2);
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08), inset 0 0.5px 0 rgba(255,255,255,0.5);
+    transition: transform .3s cubic-bezier(.3,.8,.3,1), width .3s cubic-bezier(.3,.8,.3,1);
+    z-index: 0;
   }
 
-  /* ── Search ─────────────────────────────────── */
   .search {
     position: relative;
+    flex: 1;
+    min-width: 200px;
+    max-width: 320px;
   }
   .search input {
-    width: 100%;
-    height: 38px;
-    border-radius: 12px;
+    width: 100%; height: 34px;
+    border-radius: 10px;
     border: 1px solid var(--stroke);
-    background: rgba(255,255,255,0.45);
+    background: var(--surface);
     backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    padding: 0 14px 0 36px;
-    font: inherit;
-    font-size: 14px;
+    padding: 0 12px 0 32px;
+    font: inherit; font-size: 13px;
     color: var(--fg);
     outline: none;
-    transition: box-shadow .15s, background .2s;
+    transition: box-shadow .15s, background .2s, border-color .2s;
   }
   .search input::placeholder { color: var(--fg-dim); }
   .search input:focus {
-    background: rgba(255,255,255,0.7);
-    box-shadow: 0 0 0 3px rgba(10,132,255,0.2);
-    border-color: rgba(10,132,255,0.5);
+    background: var(--surface-2);
+    box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.25);
+    border-color: rgba(var(--accent-rgb), 0.6);
   }
   .search svg {
-    position: absolute;
-    left: 12px; top: 50%; transform: translateY(-50%);
-    width: 14px; height: 14px; color: var(--fg-dim);
-    pointer-events: none;
+    position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+    width: 13px; height: 13px; color: var(--fg-dim); pointer-events: none;
   }
 
-  /* ── Station list ──────────────────────────── */
-  .section-label {
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--fg-dim);
-    padding: 0 4px;
-    margin-bottom: -16px;
-  }
-
+  /* Station grid */
   .stations {
-    list-style: none;
-    margin: 0;
-    padding: 6px;
-    border-radius: 18px;
-    background: var(--glass);
-    backdrop-filter: saturate(180%) blur(28px);
-    -webkit-backdrop-filter: saturate(180%) blur(28px);
-    border: 1px solid var(--glass-hair);
-    box-shadow:
-      0 1px 0 rgba(255,255,255,0.6) inset,
-      0 12px 30px -14px rgba(20,22,28,0.18);
-    overflow: hidden;
     flex: 1;
     overflow-y: auto;
+    padding: 4px;
+    margin: -4px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+    align-content: start;
     scrollbar-width: thin;
+    scrollbar-color: var(--fg-faint) transparent;
   }
   .stations::-webkit-scrollbar { width: 6px; }
   .stations::-webkit-scrollbar-thumb { background: var(--fg-faint); border-radius: 3px; }
 
   .station {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 10px 12px;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: background .15s;
     position: relative;
-  }
-  .station + .station::before {
-    content: "";
-    position: absolute;
-    top: 0; left: 58px; right: 12px;
-    height: 1px;
-    background: var(--stroke-soft);
-  }
-  .station:hover { background: rgba(20,22,28,0.04); }
-  .station:hover + .station::before,
-  .station.is-active + .station::before,
-  .station.is-active::before { opacity: 0; }
-
-  .station-icon {
-    width: 36px; height: 36px;
-    border-radius: 9px;
-    display: grid; place-items: center;
-    font-size: 13px; font-weight: 700;
-    color: #fff;
-    letter-spacing: -0.02em;
-    flex-shrink: 0;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.25);
-  }
-
-  .station-body {
-    flex: 1;
-    min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 1px;
+    gap: 10px;
+    padding: 10px;
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--stroke);
+    cursor: pointer;
+    transition: transform .18s cubic-bezier(.3,.8,.3,1), background .2s, border-color .2s;
+    text-align: left;
+    width: 100%;
+    font: inherit;
+    color: inherit;
   }
+  .station:hover {
+    transform: translateY(-2px);
+    background: var(--surface-2);
+    border-color: rgba(var(--accent-rgb), 0.4);
+  }
+  .station:active { transform: translateY(0) scale(0.98); }
+  .station.is-active {
+    background: rgba(var(--accent-rgb), 0.12);
+    border-color: rgba(var(--accent-rgb), 0.5);
+    box-shadow: 0 8px 24px -10px rgba(var(--accent-rgb), 0.4);
+  }
+
+  .station-art {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 11px;
+    overflow: hidden;
+    display: grid; place-items: center;
+    color: white;
+    font-weight: 700;
+    font-size: 26px;
+    letter-spacing: -0.03em;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 0 4px 12px rgba(0,0,0,0.12);
+  }
+  .station-art img {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    border-radius: 11px;
+    display: block;
+  }
+  .station-art .initials-fallback {
+    position: relative; z-index: 1;
+  }
+  .station-art::after {
+    content: "";
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 28% 25%, rgba(255,255,255,0.28) 0%, transparent 50%),
+      radial-gradient(circle at 70% 80%, rgba(0,0,0,0.15) 0%, transparent 50%);
+    mix-blend-mode: overlay;
+  }
+
   .station-name {
-    font-size: 14px;
-    font-weight: 500;
+    font-size: 13px;
+    font-weight: 600;
     letter-spacing: -0.01em;
+    line-height: 1.25;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
   .station-tag {
-    font-size: 11.5px;
+    font-size: 11px;
     color: var(--fg-dim);
+    margin-top: -6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  .station-action {
-    width: 28px; height: 28px;
-    border-radius: 50%;
-    border: 0;
-    background: rgba(20,22,28,0.06);
-    color: var(--fg);
-    display: grid; place-items: center;
-    cursor: pointer;
-    transition: background .15s, transform .12s, color .15s;
-    flex-shrink: 0;
+  .playing-chip {
+    position: absolute;
+    bottom: 60px; left: 14px;
+    display: none;
+    gap: 2px; align-items: flex-end;
+    width: 20px; height: 12px;
+    padding: 2px 4px;
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(6px);
   }
-  .station-action:hover { background: rgba(20,22,28,0.12); }
-  .station-action:active { transform: scale(0.9); }
-  .station-action svg { width: 12px; height: 12px; }
-
-  .station.is-active {
-    background: rgba(10,132,255,0.10);
-  }
-  .station.is-active .station-name { color: var(--accent); font-weight: 600; }
-  .station.is-active .station-action {
-    background: var(--accent);
-    color: #fff;
-  }
-
-  .station.is-active .playing-ind {
-    display: inline-flex;
-    gap: 2px;
-    align-items: flex-end;
-    height: 12px;
-    margin-left: 6px;
-  }
-  .playing-ind { display: none; }
-  .playing-ind i {
-    width: 2px;
-    background: var(--accent);
-    border-radius: 1px;
+  .station.is-active .playing-chip { display: inline-flex; }
+  .playing-chip i {
+    width: 2px; background: white; border-radius: 1px;
     animation: bar 1s ease-in-out infinite;
   }
-  .playing-ind i:nth-child(1) { animation-delay: 0s;    height: 50%; }
-  .playing-ind i:nth-child(2) { animation-delay: 0.2s;  height: 80%; }
-  .playing-ind i:nth-child(3) { animation-delay: 0.4s;  height: 40%; }
+  .playing-chip i:nth-child(1) { animation-delay: 0s;   height: 50%; }
+  .playing-chip i:nth-child(2) { animation-delay: 0.2s; height: 90%; }
+  .playing-chip i:nth-child(3) { animation-delay: 0.4s; height: 40%; }
+  @keyframes bar { 0%,100%{height:30%;} 50%{height:100%;} }
 
   .empty {
+    grid-column: 1 / -1;
     text-align: center;
-    padding: 32px 12px;
+    padding: 60px 20px;
     color: var(--fg-dim);
     font-size: 13px;
   }
-
-  /* ── History panel ──────────────────────────── */
-  .history-toggle {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    font: inherit;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--fg-dim);
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    padding: 0 4px;
-    margin-bottom: -18px;
-    transition: color .15s;
+  .empty-icon {
+    width: 48px; height: 48px; margin: 0 auto 12px;
+    border-radius: 14px;
+    background: var(--surface);
+    display: grid; place-items: center;
+    color: var(--fg-faint);
   }
-  .history-toggle:hover { color: var(--fg); }
-  .history-toggle svg { width: 14px; height: 14px; transition: transform .3s; }
-  .history-toggle.is-open svg { transform: rotate(180deg); }
 
-  .history-panel {
-    border-radius: 18px;
-    background: var(--glass);
-    backdrop-filter: saturate(180%) blur(28px);
-    -webkit-backdrop-filter: saturate(180%) blur(28px);
-    border: 1px solid var(--glass-hair);
-    box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset, 0 8px 24px -10px rgba(20,22,28,0.15);
-    overflow: hidden;
-    max-height: 0;
-    transition: max-height .4s cubic-bezier(.4,0,.2,1), opacity .3s;
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 28px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(20, 22, 28, 0.9);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    backdrop-filter: blur(20px);
     opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s, transform .25s cubic-bezier(.3,.8,.3,1);
+    z-index: 100;
   }
-  .history-panel.is-open {
-    max-height: 420px;
-    opacity: 1;
-  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+  /* ── History panel ───────────────────────────── */
+  .history-panel {
+    border-top: 1px solid var(--stroke);
+    padding-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .history-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--fg-faint);
+    padding: 0 2px;
+  }
   .history-list {
-    list-style: none;
-    margin: 0;
-    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
   }
   .history-item {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 8px 10px;
+    gap: 10px;
+    padding: 6px 8px;
     border-radius: 10px;
-    position: relative;
+    transition: background .15s;
   }
-  .history-item + .history-item::before {
-    content: "";
-    position: absolute;
-    top: 0; left: 50px; right: 10px;
-    height: 1px;
-    background: var(--stroke-soft);
-  }
+  .history-item:hover { background: var(--surface); }
   .history-thumb {
     width: 36px; height: 36px;
     border-radius: 8px;
-    background: rgba(20,22,28,0.08);
-    flex-shrink: 0;
     overflow: hidden;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    background: var(--surface);
+    flex-shrink: 0;
   }
-  .history-thumb img {
-    width: 100%; height: 100%;
-    object-fit: cover;
-    display: block;
-  }
+  .history-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .history-thumb-placeholder {
     width: 100%; height: 100%;
     display: grid; place-items: center;
-    font-size: 16px;
-    color: var(--fg-faint);
+    font-size: 14px; color: var(--fg-faint);
   }
-  .history-body {
-    flex: 1; min-width: 0;
-  }
-  .history-title {
-    font-size: 13px;
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  .history-body { flex: 1; min-width: 0; }
+  .history-track {
+    font-size: 12px; font-weight: 600;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     letter-spacing: -0.01em;
   }
   .history-artist {
-    font-size: 11.5px;
-    color: var(--fg-dim);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size: 11px; color: var(--fg-dim);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .history-station {
-    font-size: 10.5px;
-    color: var(--fg-faint);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-top: 1px;
-  }
-  .history-time {
-    font-size: 10.5px;
-    color: var(--fg-faint);
-    flex-shrink: 0;
-  }
-  .history-empty {
-    text-align: center;
-    padding: 24px 12px;
-    color: var(--fg-dim);
-    font-size: 13px;
-  }
+  .history-time { font-size: 10px; color: var(--fg-faint); flex-shrink: 0; }
 
-  /* Station colors */
-  .c-1 { background: linear-gradient(135deg, #ff6b6b, #c7324a); }
-  .c-2 { background: linear-gradient(135deg, #5e8bff, #2b4fc9); }
-  .c-3 { background: linear-gradient(135deg, #ffa751, #c46a1a); }
-  .c-4 { background: linear-gradient(135deg, #2ecc71, #1e7a43); }
-  .c-5 { background: linear-gradient(135deg, #a56bff, #5a2db0); }
-  .c-6 { background: linear-gradient(135deg, #17c3b2, #0a7a70); }
-  .c-7 { background: linear-gradient(135deg, #ff8cc3, #c14a8a); }
-  .c-8 { background: linear-gradient(135deg, #4a5668, #242a35); }
-  .c-9 { background: linear-gradient(135deg, #ffd166, #c9921a); color: #2a1c00 !important; }
+  /* ── Mobile responsive ───────────────────────── */
+  @media (max-width: 700px) {
+    body { overflow-y: auto; }
 
-  /* ── Quiz banner ────────────────────────────── */
-  .quiz-banner {
-    border-radius: 16px;
-    background: linear-gradient(135deg, rgba(165,107,255,0.18), rgba(94,139,255,0.18));
-    border: 1px solid rgba(165,107,255,0.25);
-    padding: 14px 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    cursor: pointer;
-    transition: background .2s, transform .15s;
-  }
-  .quiz-banner:hover { background: linear-gradient(135deg, rgba(165,107,255,0.26), rgba(94,139,255,0.26)); transform: translateY(-1px); }
-  .quiz-banner:active { transform: scale(0.98); }
-  .quiz-banner-emoji { font-size: 26px; flex-shrink: 0; }
-  .quiz-banner-text { flex: 1; min-width: 0; }
-  .quiz-banner-title { font-size: 14px; font-weight: 700; letter-spacing: -0.01em; }
-  .quiz-banner-sub   { font-size: 12px; color: var(--fg-dim); margin-top: 1px; }
-  .quiz-banner-arrow { font-size: 18px; color: var(--fg-dim); flex-shrink: 0; }
+    .app {
+      display: block;
+      height: auto;
+    }
+    .now { padding: 24px 20px 16px; }
+    .art { max-width: 200px; margin: 0 auto; }
+    .art-initials { font-size: 60px; }
+    .now-title { font-size: 18px; }
+    .wave { height: 30px; }
+    .transport { gap: 12px; }
+    .play-btn { width: 56px; height: 56px; }
+    .play-btn svg { width: 22px; height: 22px; }
+    .t-btn { width: 38px; height: 38px; }
+    .history-panel { display: flex !important; }
 
-  /* Quiz modal */
-  .quiz-overlay {
-    position: fixed; inset: 0; z-index: 100;
-    background: rgba(20,22,28,0.45);
-    backdrop-filter: blur(8px);
-    display: flex; align-items: center; justify-content: center;
-    padding: 24px;
-    opacity: 0; pointer-events: none;
-    transition: opacity .25s;
-  }
-  .quiz-overlay.is-open { opacity: 1; pointer-events: all; }
-
-  .quiz-modal {
-    width: 100%; max-width: 420px;
-    background: rgba(255,255,255,0.88);
-    backdrop-filter: saturate(180%) blur(32px);
-    -webkit-backdrop-filter: saturate(180%) blur(32px);
-    border-radius: 24px;
-    border: 1px solid rgba(255,255,255,0.9);
-    box-shadow: 0 24px 60px -12px rgba(20,22,28,0.3);
-    overflow: hidden;
-    transform: translateY(16px) scale(0.97);
-    transition: transform .3s cubic-bezier(.4,0,.2,1);
-  }
-  .quiz-overlay.is-open .quiz-modal { transform: translateY(0) scale(1); }
-
-  .quiz-inner { padding: 28px 24px 24px; }
-
-  .quiz-progress {
-    display: flex; gap: 5px; margin-bottom: 20px;
-  }
-  .quiz-progress span {
-    flex: 1; height: 3px; border-radius: 2px;
-    background: rgba(20,22,28,0.1);
-    transition: background .3s;
-  }
-  .quiz-progress span.done { background: var(--accent); }
-
-  .quiz-question {
-    font-size: 18px; font-weight: 700;
-    letter-spacing: -0.02em; line-height: 1.3;
-    margin-bottom: 6px;
-  }
-  .quiz-hint {
-    font-size: 12px; color: var(--fg-dim);
-    margin-bottom: 20px;
-  }
-  .quiz-choices {
-    display: grid; grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
-  .quiz-choice {
-    border: 1.5px solid rgba(20,22,28,0.1);
-    border-radius: 14px;
-    padding: 12px 10px;
-    text-align: center;
-    cursor: pointer;
-    background: rgba(255,255,255,0.6);
-    transition: border-color .15s, background .15s, transform .12s;
-    font: inherit; font-size: 13px; font-weight: 500;
-    color: var(--fg);
-    line-height: 1.3;
-  }
-  .quiz-choice:hover { border-color: var(--accent); background: rgba(10,132,255,0.06); }
-  .quiz-choice:active { transform: scale(0.96); }
-  .quiz-choice .choice-emoji { display: block; font-size: 22px; margin-bottom: 5px; }
-
-  /* Result screen */
-  .quiz-result { padding: 28px 24px 28px; text-align: center; }
-  .quiz-result-logo {
-    width: 88px; height: 88px;
-    border-radius: 20px;
-    overflow: hidden;
-    margin: 0 auto 16px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-    background: rgba(20,22,28,0.08);
-  }
-  .quiz-result-logo img { width: 100%; height: 100%; object-fit: cover; }
-  .quiz-result-intro { font-size: 13px; color: var(--fg-dim); margin-bottom: 4px; }
-  .quiz-result-name {
-    font-size: 22px; font-weight: 800;
-    letter-spacing: -0.03em; margin-bottom: 6px;
-  }
-  .quiz-result-desc { font-size: 13px; color: var(--fg-dim); margin-bottom: 24px; line-height: 1.5; }
-  .quiz-result-actions { display: flex; gap: 10px; justify-content: center; }
-  .quiz-btn-play {
-    padding: 11px 22px;
-    border-radius: 50px;
-    border: 0;
-    background: #111418;
-    color: #fff;
-    font: inherit; font-size: 14px; font-weight: 600;
-    cursor: pointer;
-    transition: transform .15s, background .2s;
-  }
-  .quiz-btn-play:hover { transform: scale(1.03); }
-  .quiz-btn-retry {
-    padding: 11px 18px;
-    border-radius: 50px;
-    border: 1.5px solid rgba(20,22,28,0.12);
-    background: transparent;
-    font: inherit; font-size: 14px; font-weight: 500;
-    color: var(--fg-dim);
-    cursor: pointer;
-    transition: border-color .15s, color .15s;
-  }
-  .quiz-btn-retry:hover { border-color: var(--fg); color: var(--fg); }
-  .quiz-close {
-    position: absolute; top: 16px; right: 16px;
-    width: 28px; height: 28px;
-    border-radius: 50%; border: 0;
-    background: rgba(20,22,28,0.08);
-    color: var(--fg-dim);
-    font-size: 16px; line-height: 1;
-    cursor: pointer; display: grid; place-items: center;
-    transition: background .15s;
-  }
-  .quiz-close:hover { background: rgba(20,22,28,0.14); }
-
-  /* ── Filters ────────────────────────────────── */
-  .filters {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-  .filter-btn {
-    padding: 6px 14px;
-    border-radius: 50px;
-    border: 1.5px solid rgba(20,22,28,0.12);
-    background: rgba(255,255,255,0.5);
-    font: inherit; font-size: 13px; font-weight: 500;
-    color: var(--fg-dim);
-    cursor: pointer;
-    transition: all .15s;
-    white-space: nowrap;
-  }
-  .filter-btn:hover { border-color: var(--accent); color: var(--fg); }
-  .filter-btn.is-active {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #fff;
-    font-weight: 600;
-  }
-
-  /* ── Favorites star ─────────────────────────── */
-  .station-fav {
-    width: 24px; height: 24px;
-    border: 0; background: none;
-    color: var(--fg-faint);
-    font-size: 16px; line-height: 1;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: color .15s, transform .2s;
-    padding: 0;
-    display: grid; place-items: center;
-  }
-  .station-fav:hover { color: #f5a623; transform: scale(1.2); }
-  .station-fav.is-fav { color: #f5a623; }
-
-  /* ── Mood banner ────────────────────────────── */
-  .mood-banner {
-    border-radius: 16px;
-    background: rgba(255,255,255,0.5);
-    border: 1px solid rgba(255,255,255,0.8);
-    padding: 12px 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    box-shadow: 0 2px 8px rgba(20,22,28,0.06);
-  }
-  .mood-emoji { font-size: 24px; flex-shrink: 0; }
-  .mood-text { flex: 1; min-width: 0; }
-  .mood-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-faint); }
-  .mood-station { font-size: 13px; font-weight: 600; letter-spacing: -0.01em; color: var(--fg); }
-  .mood-play {
-    padding: 6px 14px;
-    border-radius: 50px; border: 0;
-    background: #111418; color: #fff;
-    font: inherit; font-size: 12px; font-weight: 600;
-    cursor: pointer;
-    transition: transform .15s;
-    flex-shrink: 0;
-  }
-  .mood-play:hover { transform: scale(1.05); }
-
-  /* ── Konami ──────────────────────────────────── */
-  @keyframes konamiBlob {
-    0%   { transform: translate(0,0) scale(1) rotate(0deg); }
-    25%  { transform: translate(15vmax,-10vmax) scale(1.4) rotate(90deg); }
-    50%  { transform: translate(-10vmax,12vmax) scale(0.8) rotate(180deg); }
-    75%  { transform: translate(8vmax,-8vmax) scale(1.6) rotate(270deg); }
-    100% { transform: translate(0,0) scale(1) rotate(360deg); }
-  }
-  .konami-active .wallpaper::before { animation: konamiBlob 1.2s ease-in-out 3 !important; }
-  .konami-active .wallpaper::after  { animation: konamiBlob 1.5s ease-in-out 3 reverse !important; }
-  .konami-toast {
-    position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
-    background: #111418; color: #fff;
-    padding: 10px 20px; border-radius: 50px;
-    font-size: 14px; font-weight: 600;
-    z-index: 200; white-space: nowrap;
-    animation: toastIn .3s ease forwards;
-  }
-  @keyframes toastIn {
-    from { opacity: 0; transform: translateX(-50%) translateY(10px); }
-    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
-  }
-
-  @media (max-width: 520px) {
-    .volume { display: none; }
-    .player-top { grid-template-columns: 56px 1fr; }
+    .library { padding: 0 20px 40px; height: auto; min-height: 0; }
+    .stations {
+      height: auto;
+      overflow-y: visible;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .station {
+      flex-direction: row;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 14px;
+    }
+    .station-art { display: none; }
+    .playing-chip { display: none !important; }
+    .station-name { flex: 1; font-size: 14px; }
+    .station-tag { margin-top: 0; font-size: 11px; flex-shrink: 0; }
+    .station.is-active::before {
+      content: "";
+      width: 6px; height: 6px; border-radius: 50%;
+      background: rgb(var(--accent-rgb));
+      flex-shrink: 0;
+    }
   }
 </style>
 </head>
 <body>
 
-<div class="wallpaper" aria-hidden="true"></div>
+<div class="backdrop" aria-hidden="true"></div>
 
-<main class="app">
+<main class="app" id="app">
 
-  <!-- Player -->
-  <section class="player" id="player" aria-label="Lecteur">
-
-    <!-- top row: artwork + meta + volume -->
-    <div class="player-top">
-      <div class="player-art" id="playerArt">
-        <div class="player-art-placeholder" id="playerArtPlaceholder">♪</div>
-        <img id="playerArtImg" src="" alt="Pochette" class="hidden" />
-      </div>
-
-      <div class="player-meta">
-        <div class="player-station" id="nowName">Aucune station</div>
-        <div class="player-track" id="nowTrack">—</div>
-        <div class="player-artist" id="nowArtist"></div>
-        <div class="player-sub">
-          <span class="dot"></span>
-          <span id="nowStatus">Choisissez une radio ci-dessous</span>
-        </div>
-      </div>
-
-      <div class="volume" aria-label="Volume">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M11 5 6 9H3v6h3l5 4z"/>
-          <path d="M15.5 8.5a5 5 0 0 1 0 7"/>
-          <path d="M18.5 5.5a9 9 0 0 1 0 13"/>
+  <!-- LEFT : Now playing -->
+  <aside class="now">
+    <div class="brand">
+      <div class="brand-mark"><span class="orb"></span><span>Radio</span></div>
+      <button class="theme-toggle" id="themeBtn" aria-label="Changer de thème">
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
         </svg>
-        <input type="range" id="vol" min="0" max="1" step="0.01" value="0.8" aria-label="Volume"/>
-      </div>
-    </div>
-
-    <!-- bottom row: play btn + waveform -->
-    <div class="player-controls">
-      <button class="play-btn" id="playBtn" aria-label="Lecture">
-        <svg class="ico-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M8 5.5v13a1 1 0 0 0 1.54.84l10.2-6.5a1 1 0 0 0 0-1.68L9.54 4.66A1 1 0 0 0 8 5.5z"/>
-        </svg>
-        <svg class="ico-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <rect x="6.5" y="5" width="4" height="14" rx="1.2"/>
-          <rect x="13.5" y="5" width="4" height="14" rx="1.2"/>
+        <svg class="moon" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
         </svg>
       </button>
-      <div class="wave" id="wave" aria-hidden="true"></div>
     </div>
 
+    <div class="art" id="art">
+      <div class="art-halo"></div>
+      <img class="art-logo" id="artLogo" src="" alt="" />
+      <img class="art-cover" id="artCover" src="" alt="" />
+      <div class="art-grain"></div>
+      <div class="art-initials" id="artInitials">—</div>
+    </div>
+
+    <div class="now-meta">
+      <div class="now-station" id="nowStation">Aucune station</div>
+      <div class="now-title" id="nowTitle">Choisissez une radio</div>
+      <div class="now-artist" id="nowArtist" style="font-size:13px;color:var(--fg-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+      <div class="now-sub" id="nowSub">Dans la liste à droite</div>
+    </div>
+
+    <div class="wave" id="wave" aria-hidden="true"></div>
+
+    <div class="transport">
+      <button class="t-btn" id="prevBtn" aria-label="Précédente">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zM20 6.5v11a.5.5 0 0 1-.77.42L10 11.93V17a1 1 0 0 1-2 0V7a1 1 0 0 1 2 0v5.07l9.23-5.99A.5.5 0 0 1 20 6.5z"/></svg>
+      </button>
+      <button class="t-btn play-btn" id="playBtn" aria-label="Lecture/Pause">
+        <svg class="ico-play" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M8 5.5v13a1 1 0 0 0 1.54.84l10.2-6.5a1 1 0 0 0 0-1.68L9.54 4.66A1 1 0 0 0 8 5.5z"/>
+        </svg>
+        <svg class="ico-pause" viewBox="0 0 24 24" fill="currentColor">
+          <rect x="6.5" y="5" width="4" height="14" rx="1.2"/><rect x="13.5" y="5" width="4" height="14" rx="1.2"/>
+        </svg>
+      </button>
+      <button class="t-btn" id="nextBtn" aria-label="Suivante">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM4 6.5v11a.5.5 0 0 0 .77.42L14 11.93V17a1 1 0 0 0 2 0V7a1 1 0 0 0-2 0v5.07L4.77 6.08A.5.5 0 0 0 4 6.5z"/></svg>
+      </button>
+    </div>
+
+    <div class="volume-row">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M11 5 6 9H3v6h3l5 4z"/>
+      </svg>
+      <input type="range" id="vol" min="0" max="1" step="0.01" value="0.8" aria-label="Volume"/>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/>
+      </svg>
+    </div>
+
+    <!-- History -->
+    <div class="history-panel" id="historyPanel" style="display:none">
+      <div class="history-title">Titres récents</div>
+      <div class="history-list" id="historyList"></div>
+    </div>
+
+  </aside>
+
+  <!-- RIGHT : Library -->
+  <section class="library">
+    <div class="lib-head">
+      <div class="segmented" id="tabs">
+        <span class="segmented-indicator" id="segInd"></span>
+        <button class="is-active" data-filter="all">Tout</button>
+        <button data-filter="Europe 2">Europe 2</button>
+        <button data-filter="RFM">RFM</button>
+      </div>
+      <div class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
+        </svg>
+        <input id="q" type="search" placeholder="Chercher une station…" autocomplete="off" spellcheck="false"/>
+      </div>
+    </div>
+
+    <div class="stations" id="list" role="listbox"></div>
   </section>
-
-  <!-- Quiz banner -->
-  <div class="quiz-banner" id="quizBanner" role="button" tabindex="0" aria-label="Lancer le quiz">
-    <span class="quiz-banner-emoji">🎯</span>
-    <div class="quiz-banner-text">
-      <div class="quiz-banner-title">Quelle webradio es-tu ?</div>
-      <div class="quiz-banner-sub">5 questions · résultat immédiat</div>
-    </div>
-    <span class="quiz-banner-arrow">→</span>
-  </div>
-
-  <!-- Mood du jour -->
-  <div class="mood-banner" id="moodBanner">
-    <span class="mood-emoji" id="moodEmoji">🌅</span>
-    <div class="mood-text">
-      <div class="mood-label">Mood du moment</div>
-      <div class="mood-station" id="moodStation">Chargement…</div>
-    </div>
-    <button class="mood-play" id="moodPlay">Écouter</button>
-  </div>
-
-  <!-- Filtres -->
-  <div class="filters" role="group" aria-label="Filtrer les stations">
-    <button class="filter-btn is-active" data-filter="all">Tout</button>
-    <button class="filter-btn" data-filter="europe2">Europe 2</button>
-    <button class="filter-btn" data-filter="rfm">RFM</button>
-    <button class="filter-btn" data-filter="favs">⭐ Favoris</button>
-  </div>
-
-  <!-- Search -->
-  <div class="search">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
-      <circle cx="11" cy="11" r="7"/>
-      <path d="m20 20-3.5-3.5"/>
-    </svg>
-    <input id="q" type="search" placeholder="Chercher une station…" autocomplete="off" spellcheck="false"/>
-  </div>
-
-  <!-- History toggle -->
-  <button class="history-toggle" id="historyToggle" aria-expanded="false">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/>
-    </svg>
-    Titres récents
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-      <path d="m6 9 6 6 6-6"/>
-    </svg>
-  </button>
-
-  <!-- History panel -->
-  <div class="history-panel" id="historyPanel" aria-hidden="true">
-    <ul class="history-list" id="historyList">
-      <li class="history-empty">Lance une station pour voir l'historique</li>
-    </ul>
-  </div>
-
-  <!-- Stations -->
-  <ul class="stations" id="list" role="listbox" aria-label="Stations"></ul>
-
 </main>
 
-<!-- Quiz modal -->
-<div class="quiz-overlay" id="quizOverlay" aria-modal="true" role="dialog">
-  <div class="quiz-modal" id="quizModal">
-    <button class="quiz-close" id="quizClose" aria-label="Fermer">✕</button>
-    <div class="quiz-inner" id="quizInner"></div>
-  </div>
-</div>
-
+<div class="toast" id="toast"></div>
 <audio id="audio" crossorigin="anonymous" preload="none"></audio>
 
 <script>
-  // User-provided stream list
-  const E2 = "https://www.europe2.fr/wp-content/themes/melty/europeradio/assets/images";
-  const RFM_CDN = "https://resize-rfm.lanmedia.fr/r/100,100,forcex/crop/100,100,center-middle,forcex,ffffff/img/var/rfm/storage/images/programmes/les-webradios";
+  const E2  = "https://www.europe2.fr/wp-content/themes/melty/europeradio/assets/images";
+  const RFM = "https://resize-rfm.lanmedia.fr/r/100,100,forcex/crop/100,100,center-middle,forcex,ffffff/img/var/rfm/storage/images/programmes/les-webradios";
 
   const STATIONS = [
-    { name: "Europe 2 New",            tag: "Nouveautés",           color: 2, wr:  1, logo: `${E2}/webradio/WEBRADIO-NEW.jpg`,                    url: "https://wr.lmn.fm/vr-wr1.mp3",  metaUrl: "https://direct-radio.rfm.fr/playout?radio=2001" },
-    { name: "Europe 2 Classics",       tag: "Classiques",           color: 8, wr:  2, logo: `${E2}/webradio/WEBRADIO-CLASSICS.jpg`,               url: "https://wr.lmn.fm/vr-wr2.mp3",  metaUrl: "https://direct-radio.rfm.fr/playout?radio=2002" },
-    { name: "Europe 2 Acoustic",       tag: "Acoustique",           color: 3, wr:  3, logo: `${E2}/webradio/WEBRADIO-ACOUSTIC.jpg`,               url: "https://wr.lmn.fm/vr-wr3.mp3",  metaUrl: "https://direct-radio.rfm.fr/playout?radio=2003" },
-    { name: "Europe 2 Hits",           tag: "Hits",                 color: 1, wr:  4, logo: `${E2}/webradio/WEBRADIO-HITS.jpg`,                   url: "https://wr.lmn.fm/vr-wr4.mp3",  metaUrl: "https://direct-radio.rfm.fr/playout?radio=2004" },
-    { name: "Europe 2 Rock",           tag: "Rock",                 color: 1, wr:  5, logo: `${E2}/webradio/WEBRADIO-ROCK.jpg`,                   url: "https://wr.lmn.fm/vr-wr5.mp3",  metaUrl: "https://direct-radio.rfm.fr/playout?radio=2005" },
-    { name: "Europe 2 Mix",            tag: "Mix",                  color: 5, wr:  6, logo: `${E2}/webradio/WEBRADIO-MIX.jpg`,                    url: "https://wr.lmn.fm/vr-wr6.mp3",  metaUrl: "https://direct-radio.rfm.fr/playout?radio=2006" },
-    { name: "Europe 2 Live",           tag: "Live",                 color: 4, wr:  7, logo: `${E2}/webradio/WEBRADIO-LIVE.jpg`,                   url: "https://wr.lmn.fm/vr-wr7.mp3",  metaUrl: "https://direct-radio.rfm.fr/playout?radio=2007" },
-    { name: "Europe 2 Nouvelle Scène", tag: "Découvertes",          color: 6, wr:  8, logo: `${E2}/webradio/WEBRADIO-NOUVELLESCENE.jpg`,          url: "https://wr.lmn.fm/vr-wr8.mp3",  metaUrl: "https://direct-radio.rfm.fr/playout?radio=2008" },
-    { name: "Europe 2 100% Français",  tag: "Chanson française",    color: 2, wr:  9, logo: `${E2}/webradio/WEBRADIO-100FR.jpg`,                  url: "https://wr.lmn.fm/vr-wr9.mp3",  metaUrl: "https://direct-radio.rfm.fr/playout?radio=2009" },
-    { name: "Europe 2 Slow",           tag: "Slows",                color: 7, wr: 10, logo: `${E2}/webradio/WEBRADIO-SLOW.jpg`,                   url: "https://wr.lmn.fm/vr-wr10.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=2010" },
-    { name: "Europe 2 Cardio",         tag: "Sport · Énergie",      color: 1, wr: 11, logo: `${E2}/webradio/WEBRADIO-CARDIO.jpg`,                 url: "https://wr.lmn.fm/vr-wr11.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=2011" },
-    { name: "Europe 2 90's",           tag: "Années 90",            color: 5, wr: 12, logo: `${E2}/webradio/WEBRADIO-90S.jpg`,                    url: "https://wr.lmn.fm/vr-wr12.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=2012" },
-    { name: "Europe 2 Millenium",      tag: "Années 2000",          color: 2, wr: 13, logo: `${E2}/webradio/WEBRADIO-MILLENIUM.jpg`,              url: "https://wr.lmn.fm/vr-wr13.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=2013" },
-    { name: "Europe 2 Girl Power",     tag: "Pop · Female",         color: 7, wr: 14, logo: `${E2}/webradio/WEBRADIO-GIRLPOWER.jpg`,              url: "https://wr.lmn.fm/vr-wr14.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=2014" },
-    { name: "Europe 2 Pop Rock",       tag: "Pop Rock",             color: 1, wr: 15, logo: `${E2}/webradio/WEBRADIO-POPROCK.jpg`,                url: "https://wr.lmn.fm/vr-wr15.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=2015" },
-    { name: "Europe 2 French Touch",   tag: "Électro française",    color: 5, wr: 16, logo: `${E2}/radio/FRENCHTOUCH-CARRE-250.jpg`,              url: "https://wr.lmn.fm/vr-wr16.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=2016" },
-    { name: "Europe 2 Love",           tag: "Romantique",           color: 7, wr: 17, logo: `${E2}/radio/love-carre.jpg`,                         url: "https://wr.lmn.fm/vr-wr17.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=2017" },
-    { name: "Europe 2 Pop 2010",       tag: "Pop 2010s",            color: 2, wr: 18, logo: `${E2}/radio/POP2010-CARRE-250.jpg`,                  url: "https://wr.lmn.fm/vr-wr18.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=2018" },
-    { name: "Europe 2 Dance",          tag: "Dance · Club",         color: 5, wr: 19, logo: `${E2}/radio/DANCE-250.jpg`,                          url: "https://wr.lmn.fm/vr-wr19.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=2019" },
-    { name: "Europe 2 Ciné",           tag: "B.O. de films",        color: 8, wr: 20, logo: `${E2}/radio/CINE-250.jpg`,                           url: "https://wr.lmn.fm/vr-wr20.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=2020" },
-    { name: "Europe 2 Pop 2020",       tag: "Pop actuelle",         color: 2, wr: 21, logo: `${E2}/radio/POP2020-CARRE-250.jpg`,                  url: "https://wr.lmn.fm/vr-wr21.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=2021" },
-    { name: "Europe 2 Running",        tag: "Course · Tempo",       color: 3, wr: 22, logo: `${E2}/radio/RUNNING-CARRE-250.jpg`,                  url: "https://wr.lmn.fm/vr-wr22.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=2022" },
-    { name: "Europe 2 Duos",           tag: "Duos",                 color: 7, wr: 23, logo: `${E2}/radio/DUOS-CARRE-250.jpg`,                     url: "https://wr.lmn.fm/vr-wr23.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=2023" },
-    { name: "Europe 2 Soul / R'n'B",   tag: "Soul · R'n'B",         color: 5, wr: 24, logo: `${E2}/radio/SOULRNB-250X250.jpg`,                   url: "https://wr.lmn.fm/vr-wr24.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=2024" },
-    { name: "Europe 2 Home",           tag: "À la maison",          color: 3, wr: 25, logo: `${E2}/radio/HOME-250X250.jpg`,                       url: "https://wr.lmn.fm/vr-wr25.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=2025" },
-    { name: "Work",                    tag: "Concentration",        color: 8, wr: 26, logo: `${E2}/radio/WORK-250X250.jpg`,                       url: "https://wr.lmn.fm/vr-wr26.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=2026" },
-    { name: "Europe 2 Zen",            tag: "Détente",              color: 6, wr: 27, logo: `${E2}/radio/ZEN-CARRE-250.jpg`,                      url: "https://wr.lmn.fm/vr-wr27.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=2027" },
-    // ── RFM ─────────────────────────────────────────────────────────────────
-    { name: "RFM Collector",           tag: "Collector",            color: 4, wr:  1, logo: `${RFM_CDN}/rfm-collector/3275-3-fre-FR/RFM-Collector.png`,                          url: "https://rfm.lmn.fm/rfm-wr1.mp3",  metaUrl: "https://direct-radio.rfm.fr/playout?radio=3001" },
-    { name: "RFM Night Fever",         tag: "Disco · Funk",         color: 5, wr:  2, logo: `${RFM_CDN}/rfm-night-fever/3090-6-fre-FR/RFM-Night-Fever.png`,                     url: "https://rfm.lmn.fm/rfm-wr2.mp3",  metaUrl: "https://direct-radio.rfm.fr/playout?radio=3002" },
-    { name: "RFM La Radio Couleur",    tag: "Généraliste",          color: 4, wr:  3, logo: `${RFM_CDN}/la-radio-couleur/19322-9-fre-FR/La-Radio-Couleur.png`,                   url: "https://rfm.lmn.fm/rfm-wr3.mp3",  metaUrl: "https://direct-radio.rfm.fr/playout?radio=3003" },
-    { name: "RFM 80'",                 tag: "Années 80",            color: 6, wr:  4, logo: `${RFM_CDN}/rfm-80-s/3281-3-fre-FR/RFM-80-s.png`,                                   url: "https://rfm.lmn.fm/rfm-wr4.mp3",  metaUrl: "https://direct-radio.rfm.fr/playout?radio=3004" },
-    { name: "RFM Party 90",            tag: "Années 90",            color: 5, wr:  5, logo: `${RFM_CDN}/rfm-party-90/7598-13-fre-FR/RFM-Party-90.jpg`,                          url: "https://rfm.lmn.fm/rfm-wr5.mp3",  metaUrl: "https://direct-radio.rfm.fr/playout?radio=3005" },
-    { name: "RFM Lounge",              tag: "Lounge",               color: 8, wr:  6, logo: `${RFM_CDN}/rfm-lounge/19264-14-fre-FR/RFM-Lounge.png`,                              url: "https://rfm.lmn.fm/rfm-wr6.mp3",  metaUrl: "https://direct-radio.rfm.fr/playout?radio=3006" },
-    { name: "RFM Top 50",              tag: "Le Hit",               color: 1, wr:  7, logo: `${RFM_CDN}/le-top-50-rfm/3287-21-fre-FR/Le-Top-50-RFM.png`,                        url: "https://rfm.lmn.fm/rfm-wr7.mp3",  metaUrl: "https://direct-radio.rfm.fr/playout?radio=3007" },
-    { name: "RFM Hit Party",           tag: "Hits · Fête",          color: 1, wr:  8, logo: `${RFM_CDN}/rfm-summer-party/171024-30-fre-FR/RFM-Summer-Party.jpg`,                url: "https://rfm.lmn.fm/rfm-wr8.mp3",  metaUrl: "https://direct-radio.rfm.fr/playout?radio=3008" },
-    { name: "RFM Love",                tag: "Romantique",           color: 7, wr:  9, logo: `${RFM_CDN}/rfm-love-songs/19356-14-fre-FR/RFM-Love-Songs.jpg`,                     url: "https://rfm.lmn.fm/rfm-wr9.mp3",  metaUrl: "https://direct-radio.rfm.fr/playout?radio=3009" },
-    { name: "RFM Pop Rock",            tag: "Pop Rock",             color: 1, wr: 10, logo: `${RFM_CDN}/rfm-pop-rock/19370-1-fre-FR/RFM-Pop-Rock.png`,                          url: "https://rfm.lmn.fm/rfm-wr10.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=3010" },
-    { name: "RFM 100% Français",       tag: "Chanson française",    color: 2, wr: 11, logo: `${RFM_CDN}/100-francais/50811-7-fre-FR/100-Francais.png`,                          url: "https://rfm.lmn.fm/rfm-wr11.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=3011" },
-    { name: "RFM New Wave",            tag: "New Wave",             color: 6, wr: 12, logo: `${RFM_CDN}/100-new-wave/30917-9-fre-FR/100-New-Wave.png`,                          url: "https://rfm.lmn.fm/rfm-wr12.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=3012" },
-    { name: "RFM Slow",                tag: "Slows",                color: 7, wr: 13, logo: `${RFM_CDN}/rfm-slow/54053-1-fre-FR/RFM-Slow.png`,                                  url: "https://rfm.lmn.fm/rfm-wr13.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=3013" },
-    { name: "RFM 80-90",               tag: "Années 80-90",         color: 6, wr: 14, logo: `${RFM_CDN}/rfm-party-80-90/54039-33-fre-FR/RFM-Party-80-90.png`,                  url: "https://rfm.lmn.fm/rfm-wr14.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=3014" },
-    { name: "RFM Chagrins d'Amour",    tag: "Rupture · Nostalgie",  color: 7, wr: 15, logo: `${RFM_CDN}/rfm-chagrins-d-amour/54025-18-fre-FR/RFM-chagrins-d-amour.jpg`,        url: "https://rfm.lmn.fm/rfm-wr15.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=3015" },
-    { name: "RFM 70's",                tag: "Années 70",            color: 4, wr: 16, logo: `${RFM_CDN}/rfm-70-s/67769-15-fre-FR/RFM-70-s.png`,                                url: "https://rfm.lmn.fm/rfm-wr16.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=3016" },
-    { name: "RFM California",          tag: "West Coast · Rock",    color: 3, wr: 17, logo: `${RFM_CDN}/rfm-california/467194-1-fre-FR/RFM-California.jpg`,                    url: "https://rfm.lmn.fm/rfm-wr17.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=3017" },
-    { name: "RFM Party Mix",           tag: "Yann Muller",          color: 5, wr: 18, logo: `${RFM_CDN}/party-mix-avec-yann-muller/467201-4-fre-FR/Party-Mix-avec-Yann-Muller.jpg`, url: "https://rfm.lmn.fm/rfm-wr18.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=3018" },
-    { name: "RFM Cinéma",              tag: "B.O. de films",        color: 8, wr: 19, logo: `${RFM_CDN}/rfm-cinema/467909-1-fre-FR/RFM-Cinema.jpg`,                            url: "https://rfm.lmn.fm/rfm-wr19.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=3019" },
-    { name: "RFM Hit 2000",            tag: "Années 2000",          color: 2, wr: 20, logo: `${RFM_CDN}/rfm-hits-2000/469859-1-fre-FR/RFM-Hits-2000.jpg`,                      url: "https://rfm.lmn.fm/rfm-wr20.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=3020" },
-    { name: "RFM Hit 2010",            tag: "Années 2010",          color: 2, wr: 21, logo: `${RFM_CDN}/rfm-hits-2010/469852-1-fre-FR/RFM-Hits-2010.jpg`,                      url: "https://rfm.lmn.fm/rfm-wr21.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=3021" },
-    { name: "RFM Live",                tag: "Live",                 color: 4, wr: 22, logo: `${RFM_CDN}/rfm-live/469809-1-fre-FR/RFM-Live.jpg`,                                url: "https://rfm.lmn.fm/rfm-wr22.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=3022" },
-    { name: "RFM Nouvelle Production", tag: "Nouveautés",           color: 3, wr: 23, logo: `${RFM_CDN}/rfm-talent-a-suivre/469845-1-fre-FR/RFM-Talent-a-Suivre.jpg`,          url: "https://rfm.lmn.fm/rfm-wr23.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=3023" },
-    { name: "RFM Italie",              tag: "Chansons italiennes",  color: 4, wr: 24, logo: `${RFM_CDN}/rfm-italie/469866-1-fre-FR/RFM-Italie.jpg`,                            url: "https://rfm.lmn.fm/rfm-wr24.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=3024" },
-    { name: "RFM Christmas",           tag: "Noël",                 color: 7, wr: 25, logo: `${RFM_CDN}/rfm-christmas/467289-1-fre-FR/RFM-Christmas.png`,                      url: "https://rfm.lmn.fm/rfm-wr25.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=3025" },
-    { name: "RFM On the Road",         tag: "Route · Voyage",       color: 3, wr: 26, logo: `${RFM_CDN}/rfm-on-the-road/469802-1-fre-FR/RFM-On-The-Road.jpg`,                  url: "https://rfm.lmn.fm/rfm-wr26.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=3026" },
-    { name: "RFM Funk",                tag: "Funk",                 color: 5, wr: 27, logo: `${RFM_CDN}/rfm-funk/469895-1-fre-FR/RFM-Funk.jpg`,                                url: "https://rfm.lmn.fm/rfm-wr27.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=3027" },
-    { name: "RFM Run & Fit",           tag: "Sport · Énergie",      color: 1, wr: 28, logo: `${RFM_CDN}/rfm-run-and-fit/492963-1-fre-FR/RFM-Run-and-Fit.jpg`,                  url: "https://rfm.lmn.fm/rfm-wr28.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=3028" },
-    { name: "RFM Disco",               tag: "Disco",                color: 5, wr: 29, logo: `${RFM_CDN}/rfm-disco/469888-1-fre-FR/RFM-Disco.jpg`,                              url: "https://rfm.lmn.fm/rfm-wr29.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=3029" },
-    { name: "RFM Party 80",            tag: "Fête · Années 80",     color: 6, wr: 30, logo: `${RFM_CDN}/rfm-party-80/499872-3-fre-FR/RFM-Party-80.png`,                        url: "https://rfm.lmn.fm/rfm-wr30.mp3", metaUrl: "https://direct-radio.rfm.fr/playout?radio=3030" },
+    { name: "Europe 2 New",            tag: "Nouveautés",        group: "Europe 2", accent: "255, 107, 74",  url: "https://wr.lmn.fm/vr-wr1.mp3",  logo: `${E2}/webradio/WEBRADIO-NEW.jpg`,               metaUrl: "https://direct-radio.rfm.fr/playout?radio=2001", wr:  1 },
+    { name: "Europe 2 Classics",       tag: "Classiques",        group: "Europe 2", accent: "111, 125, 150", url: "https://wr.lmn.fm/vr-wr2.mp3",  logo: `${E2}/webradio/WEBRADIO-CLASSICS.jpg`,          metaUrl: "https://direct-radio.rfm.fr/playout?radio=2002", wr:  2 },
+    { name: "Europe 2 Acoustic",       tag: "Acoustique",        group: "Europe 2", accent: "255, 167, 81",  url: "https://wr.lmn.fm/vr-wr3.mp3",  logo: `${E2}/webradio/WEBRADIO-ACOUSTIC.jpg`,          metaUrl: "https://direct-radio.rfm.fr/playout?radio=2003", wr:  3 },
+    { name: "Europe 2 Hits",           tag: "Hits",              group: "Europe 2", accent: "255, 90, 120",  url: "https://wr.lmn.fm/vr-wr4.mp3",  logo: `${E2}/webradio/WEBRADIO-HITS.jpg`,              metaUrl: "https://direct-radio.rfm.fr/playout?radio=2004", wr:  4 },
+    { name: "Europe 2 Rock",           tag: "Rock",              group: "Europe 2", accent: "210, 60, 70",   url: "https://wr.lmn.fm/vr-wr5.mp3",  logo: `${E2}/webradio/WEBRADIO-ROCK.jpg`,              metaUrl: "https://direct-radio.rfm.fr/playout?radio=2005", wr:  5 },
+    { name: "Europe 2 Mix",            tag: "Mix",               group: "Europe 2", accent: "165, 107, 255", url: "https://wr.lmn.fm/vr-wr6.mp3",  logo: `${E2}/webradio/WEBRADIO-MIX.jpg`,               metaUrl: "https://direct-radio.rfm.fr/playout?radio=2006", wr:  6 },
+    { name: "Europe 2 Live",           tag: "Live",              group: "Europe 2", accent: "46, 204, 113",  url: "https://wr.lmn.fm/vr-wr7.mp3",  logo: `${E2}/webradio/WEBRADIO-LIVE.jpg`,              metaUrl: "https://direct-radio.rfm.fr/playout?radio=2007", wr:  7 },
+    { name: "Europe 2 Nouvelle Scène", tag: "Découvertes",       group: "Europe 2", accent: "23, 195, 178",  url: "https://wr.lmn.fm/vr-wr8.mp3",  logo: `${E2}/webradio/WEBRADIO-NOUVELLESCENE.jpg`,     metaUrl: "https://direct-radio.rfm.fr/playout?radio=2008", wr:  8 },
+    { name: "Europe 2 100% Français",  tag: "Chanson française", group: "Europe 2", accent: "94, 139, 255",  url: "https://wr.lmn.fm/vr-wr9.mp3",  logo: `${E2}/webradio/WEBRADIO-100FR.jpg`,             metaUrl: "https://direct-radio.rfm.fr/playout?radio=2009", wr:  9 },
+    { name: "Europe 2 Slow",           tag: "Slows",             group: "Europe 2", accent: "255, 140, 195", url: "https://wr.lmn.fm/vr-wr10.mp3", logo: `${E2}/webradio/WEBRADIO-SLOW.jpg`,              metaUrl: "https://direct-radio.rfm.fr/playout?radio=2010", wr: 10 },
+    { name: "Europe 2 Cardio",         tag: "Énergie",           group: "Europe 2", accent: "255, 80, 80",   url: "https://wr.lmn.fm/vr-wr11.mp3", logo: `${E2}/webradio/WEBRADIO-CARDIO.jpg`,            metaUrl: "https://direct-radio.rfm.fr/playout?radio=2011", wr: 11 },
+    { name: "Europe 2 90's",           tag: "Années 90",         group: "Europe 2", accent: "180, 100, 220", url: "https://wr.lmn.fm/vr-wr12.mp3", logo: `${E2}/webradio/WEBRADIO-90S.jpg`,               metaUrl: "https://direct-radio.rfm.fr/playout?radio=2012", wr: 12 },
+    { name: "Europe 2 Millenium",      tag: "Années 2000",       group: "Europe 2", accent: "100, 150, 255", url: "https://wr.lmn.fm/vr-wr13.mp3", logo: `${E2}/webradio/WEBRADIO-MILLENIUM.jpg`,         metaUrl: "https://direct-radio.rfm.fr/playout?radio=2013", wr: 13 },
+    { name: "Europe 2 Girl Power",     tag: "Pop · Female",      group: "Europe 2", accent: "255, 105, 180", url: "https://wr.lmn.fm/vr-wr14.mp3", logo: `${E2}/webradio/WEBRADIO-GIRLPOWER.jpg`,         metaUrl: "https://direct-radio.rfm.fr/playout?radio=2014", wr: 14 },
+    { name: "Europe 2 Pop Rock",       tag: "Pop Rock",          group: "Europe 2", accent: "240, 90, 110",  url: "https://wr.lmn.fm/vr-wr15.mp3", logo: `${E2}/webradio/WEBRADIO-POPROCK.jpg`,           metaUrl: "https://direct-radio.rfm.fr/playout?radio=2015", wr: 15 },
+    { name: "Europe 2 French Touch",   tag: "Électro française", group: "Europe 2", accent: "138, 80, 255",  url: "https://wr.lmn.fm/vr-wr16.mp3", logo: `${E2}/radio/FRENCHTOUCH-CARRE-250.jpg`,         metaUrl: "https://direct-radio.rfm.fr/playout?radio=2016", wr: 16 },
+    { name: "Europe 2 Love",           tag: "Romantique",        group: "Europe 2", accent: "255, 120, 150", url: "https://wr.lmn.fm/vr-wr17.mp3", logo: `${E2}/radio/love-carre.jpg`,                    metaUrl: "https://direct-radio.rfm.fr/playout?radio=2017", wr: 17 },
+    { name: "Europe 2 Pop 2010",       tag: "Pop 2010s",         group: "Europe 2", accent: "110, 160, 255", url: "https://wr.lmn.fm/vr-wr18.mp3", logo: `${E2}/radio/POP2010-CARRE-250.jpg`,             metaUrl: "https://direct-radio.rfm.fr/playout?radio=2018", wr: 18 },
+    { name: "Europe 2 Dance",          tag: "Dance · Club",      group: "Europe 2", accent: "120, 90, 240",  url: "https://wr.lmn.fm/vr-wr19.mp3", logo: `${E2}/radio/DANCE-250.jpg`,                     metaUrl: "https://direct-radio.rfm.fr/playout?radio=2019", wr: 19 },
+    { name: "Europe 2 Ciné",           tag: "B.O. de films",     group: "Europe 2", accent: "80, 100, 130",  url: "https://wr.lmn.fm/vr-wr20.mp3", logo: `${E2}/radio/CINE-250.jpg`,                      metaUrl: "https://direct-radio.rfm.fr/playout?radio=2020", wr: 20 },
+    { name: "Europe 2 Pop 2020",       tag: "Pop actuelle",      group: "Europe 2", accent: "90, 180, 255",  url: "https://wr.lmn.fm/vr-wr21.mp3", logo: `${E2}/radio/POP2020-CARRE-250.jpg`,             metaUrl: "https://direct-radio.rfm.fr/playout?radio=2021", wr: 21 },
+    { name: "Europe 2 Running",        tag: "Tempo",             group: "Europe 2", accent: "255, 180, 70",  url: "https://wr.lmn.fm/vr-wr22.mp3", logo: `${E2}/radio/RUNNING-CARRE-250.jpg`,             metaUrl: "https://direct-radio.rfm.fr/playout?radio=2022", wr: 22 },
+    { name: "Europe 2 Duos",           tag: "Duos",              group: "Europe 2", accent: "255, 150, 190", url: "https://wr.lmn.fm/vr-wr23.mp3", logo: `${E2}/radio/DUOS-CARRE-250.jpg`,                metaUrl: "https://direct-radio.rfm.fr/playout?radio=2023", wr: 23 },
+    { name: "Europe 2 Soul / R'n'B",   tag: "Soul · R'n'B",      group: "Europe 2", accent: "150, 90, 200",  url: "https://wr.lmn.fm/vr-wr24.mp3", logo: `${E2}/radio/SOULRNB-250X250.jpg`,               metaUrl: "https://direct-radio.rfm.fr/playout?radio=2024", wr: 24 },
+    { name: "Europe 2 Home",           tag: "À la maison",       group: "Europe 2", accent: "255, 140, 100", url: "https://wr.lmn.fm/vr-wr25.mp3", logo: `${E2}/radio/HOME-250X250.jpg`,                  metaUrl: "https://direct-radio.rfm.fr/playout?radio=2025", wr: 25 },
+    { name: "Work",                    tag: "Concentration",     group: "Europe 2", accent: "90, 100, 115",  url: "https://wr.lmn.fm/vr-wr26.mp3", logo: `${E2}/radio/WORK-250X250.jpg`,                  metaUrl: "https://direct-radio.rfm.fr/playout?radio=2026", wr: 26 },
+    { name: "Europe 2 Zen",            tag: "Détente",           group: "Europe 2", accent: "120, 200, 190", url: "https://wr.lmn.fm/vr-wr27.mp3", logo: `${E2}/radio/ZEN-CARRE-250.jpg`,                 metaUrl: "https://direct-radio.rfm.fr/playout?radio=2027", wr: 27 },
+    // ── RFM ──────────────────────────────────────────────────────────────────────
+    { name: "RFM Collector",           tag: "Collector",         group: "RFM",      accent: "46, 180, 130",  url: "https://rfm.lmn.fm/rfm-wr1.mp3",  logo: `${RFM}/rfm-collector/3275-3-fre-FR/RFM-Collector.png`,                          metaUrl: "https://direct-radio.rfm.fr/playout?radio=3001", wr:  1 },
+    { name: "RFM Night Fever",         tag: "Disco · Funk",      group: "RFM",      accent: "200, 80, 200",  url: "https://rfm.lmn.fm/rfm-wr2.mp3",  logo: `${RFM}/rfm-night-fever/3090-6-fre-FR/RFM-Night-Fever.png`,                     metaUrl: "https://direct-radio.rfm.fr/playout?radio=3002", wr:  2 },
+    { name: "RFM La Radio Couleur",    tag: "Généraliste",       group: "RFM",      accent: "46, 180, 130",  url: "https://rfm.lmn.fm/rfm-wr3.mp3",  logo: `${RFM}/la-radio-couleur/19322-9-fre-FR/La-Radio-Couleur.png`,                   metaUrl: "https://direct-radio.rfm.fr/playout?radio=3003", wr:  3 },
+    { name: "RFM 80'",                 tag: "Années 80",         group: "RFM",      accent: "220, 120, 50",  url: "https://rfm.lmn.fm/rfm-wr4.mp3",  logo: `${RFM}/rfm-80-s/3281-3-fre-FR/RFM-80-s.png`,                                   metaUrl: "https://direct-radio.rfm.fr/playout?radio=3004", wr:  4 },
+    { name: "RFM Party 90",            tag: "Années 90",         group: "RFM",      accent: "160, 80, 220",  url: "https://rfm.lmn.fm/rfm-wr5.mp3",  logo: `${RFM}/rfm-party-90/7598-13-fre-FR/RFM-Party-90.jpg`,                          metaUrl: "https://direct-radio.rfm.fr/playout?radio=3005", wr:  5 },
+    { name: "RFM Lounge",              tag: "Lounge",            group: "RFM",      accent: "80, 120, 160",  url: "https://rfm.lmn.fm/rfm-wr6.mp3",  logo: `${RFM}/rfm-lounge/19264-14-fre-FR/RFM-Lounge.png`,                              metaUrl: "https://direct-radio.rfm.fr/playout?radio=3006", wr:  6 },
+    { name: "RFM Top 50",              tag: "Le Hit",            group: "RFM",      accent: "255, 80, 80",   url: "https://rfm.lmn.fm/rfm-wr7.mp3",  logo: `${RFM}/le-top-50-rfm/3287-21-fre-FR/Le-Top-50-RFM.png`,                        metaUrl: "https://direct-radio.rfm.fr/playout?radio=3007", wr:  7 },
+    { name: "RFM Hit Party",           tag: "Hits · Fête",       group: "RFM",      accent: "255, 140, 50",  url: "https://rfm.lmn.fm/rfm-wr8.mp3",  logo: `${RFM}/rfm-summer-party/171024-30-fre-FR/RFM-Summer-Party.jpg`,                metaUrl: "https://direct-radio.rfm.fr/playout?radio=3008", wr:  8 },
+    { name: "RFM Love",                tag: "Romantique",        group: "RFM",      accent: "255, 100, 150", url: "https://rfm.lmn.fm/rfm-wr9.mp3",  logo: `${RFM}/rfm-love-songs/19356-14-fre-FR/RFM-Love-Songs.jpg`,                     metaUrl: "https://direct-radio.rfm.fr/playout?radio=3009", wr:  9 },
+    { name: "RFM Pop Rock",            tag: "Pop Rock",          group: "RFM",      accent: "220, 80, 100",  url: "https://rfm.lmn.fm/rfm-wr10.mp3", logo: `${RFM}/rfm-pop-rock/19370-1-fre-FR/RFM-Pop-Rock.png`,                          metaUrl: "https://direct-radio.rfm.fr/playout?radio=3010", wr: 10 },
+    { name: "RFM 100% Français",       tag: "Chanson française", group: "RFM",      accent: "60, 120, 220",  url: "https://rfm.lmn.fm/rfm-wr11.mp3", logo: `${RFM}/100-francais/50811-7-fre-FR/100-Francais.png`,                          metaUrl: "https://direct-radio.rfm.fr/playout?radio=3011", wr: 11 },
+    { name: "RFM New Wave",            tag: "New Wave",          group: "RFM",      accent: "23, 180, 170",  url: "https://rfm.lmn.fm/rfm-wr12.mp3", logo: `${RFM}/100-new-wave/30917-9-fre-FR/100-New-Wave.png`,                          metaUrl: "https://direct-radio.rfm.fr/playout?radio=3012", wr: 12 },
+    { name: "RFM Slow",                tag: "Slows",             group: "RFM",      accent: "255, 130, 180", url: "https://rfm.lmn.fm/rfm-wr13.mp3", logo: `${RFM}/rfm-slow/54053-1-fre-FR/RFM-Slow.png`,                                  metaUrl: "https://direct-radio.rfm.fr/playout?radio=3013", wr: 13 },
+    { name: "RFM 80-90",               tag: "Années 80-90",      group: "RFM",      accent: "200, 120, 60",  url: "https://rfm.lmn.fm/rfm-wr14.mp3", logo: `${RFM}/rfm-party-80-90/54039-33-fre-FR/RFM-Party-80-90.png`,                  metaUrl: "https://direct-radio.rfm.fr/playout?radio=3014", wr: 14 },
+    { name: "RFM Chagrins d'Amour",    tag: "Nostalgie",         group: "RFM",      accent: "180, 80, 120",  url: "https://rfm.lmn.fm/rfm-wr15.mp3", logo: `${RFM}/rfm-chagrins-d-amour/54025-18-fre-FR/RFM-chagrins-d-amour.jpg`,        metaUrl: "https://direct-radio.rfm.fr/playout?radio=3015", wr: 15 },
+    { name: "RFM 70's",                tag: "Années 70",         group: "RFM",      accent: "200, 160, 60",  url: "https://rfm.lmn.fm/rfm-wr16.mp3", logo: `${RFM}/rfm-70-s/67769-15-fre-FR/RFM-70-s.png`,                                metaUrl: "https://direct-radio.rfm.fr/playout?radio=3016", wr: 16 },
+    { name: "RFM California",          tag: "West Coast",        group: "RFM",      accent: "80, 180, 220",  url: "https://rfm.lmn.fm/rfm-wr17.mp3", logo: `${RFM}/rfm-california/467194-1-fre-FR/RFM-California.jpg`,                    metaUrl: "https://direct-radio.rfm.fr/playout?radio=3017", wr: 17 },
+    { name: "RFM Party Mix",           tag: "Yann Muller",       group: "RFM",      accent: "150, 80, 220",  url: "https://rfm.lmn.fm/rfm-wr18.mp3", logo: `${RFM}/party-mix-avec-yann-muller/467201-4-fre-FR/Party-Mix-avec-Yann-Muller.jpg`, metaUrl: "https://direct-radio.rfm.fr/playout?radio=3018", wr: 18 },
+    { name: "RFM Cinéma",              tag: "B.O. de films",     group: "RFM",      accent: "80, 100, 140",  url: "https://rfm.lmn.fm/rfm-wr19.mp3", logo: `${RFM}/rfm-cinema/467909-1-fre-FR/RFM-Cinema.jpg`,                            metaUrl: "https://direct-radio.rfm.fr/playout?radio=3019", wr: 19 },
+    { name: "RFM Hit 2000",            tag: "Années 2000",       group: "RFM",      accent: "80, 140, 255",  url: "https://rfm.lmn.fm/rfm-wr20.mp3", logo: `${RFM}/rfm-hits-2000/469859-1-fre-FR/RFM-Hits-2000.jpg`,                      metaUrl: "https://direct-radio.rfm.fr/playout?radio=3020", wr: 20 },
+    { name: "RFM Hit 2010",            tag: "Années 2010",       group: "RFM",      accent: "100, 160, 255", url: "https://rfm.lmn.fm/rfm-wr21.mp3", logo: `${RFM}/rfm-hits-2010/469852-1-fre-FR/RFM-Hits-2010.jpg`,                      metaUrl: "https://direct-radio.rfm.fr/playout?radio=3021", wr: 21 },
+    { name: "RFM Live",                tag: "Live",              group: "RFM",      accent: "46, 200, 120",  url: "https://rfm.lmn.fm/rfm-wr22.mp3", logo: `${RFM}/rfm-live/469809-1-fre-FR/RFM-Live.jpg`,                                metaUrl: "https://direct-radio.rfm.fr/playout?radio=3022", wr: 22 },
+    { name: "RFM Nouvelle Production", tag: "Nouveautés",        group: "RFM",      accent: "80, 200, 180",  url: "https://rfm.lmn.fm/rfm-wr23.mp3", logo: `${RFM}/rfm-talent-a-suivre/469845-1-fre-FR/RFM-Talent-a-Suivre.jpg`,          metaUrl: "https://direct-radio.rfm.fr/playout?radio=3023", wr: 23 },
+    { name: "RFM Italie",              tag: "Chansons italiennes",group: "RFM",     accent: "200, 80, 60",   url: "https://rfm.lmn.fm/rfm-wr24.mp3", logo: `${RFM}/rfm-italie/469866-1-fre-FR/RFM-Italie.jpg`,                            metaUrl: "https://direct-radio.rfm.fr/playout?radio=3024", wr: 24 },
+    { name: "RFM Christmas",           tag: "Noël",              group: "RFM",      accent: "200, 60, 60",   url: "https://rfm.lmn.fm/rfm-wr25.mp3", logo: `${RFM}/rfm-christmas/467289-1-fre-FR/RFM-Christmas.png`,                      metaUrl: "https://direct-radio.rfm.fr/playout?radio=3025", wr: 25 },
+    { name: "RFM On the Road",         tag: "Route · Voyage",    group: "RFM",      accent: "80, 160, 120",  url: "https://rfm.lmn.fm/rfm-wr26.mp3", logo: `${RFM}/rfm-on-the-road/469802-1-fre-FR/RFM-On-The-Road.jpg`,                  metaUrl: "https://direct-radio.rfm.fr/playout?radio=3026", wr: 26 },
+    { name: "RFM Funk",                tag: "Funk",              group: "RFM",      accent: "180, 100, 40",  url: "https://rfm.lmn.fm/rfm-wr27.mp3", logo: `${RFM}/rfm-funk/469895-1-fre-FR/RFM-Funk.jpg`,                                metaUrl: "https://direct-radio.rfm.fr/playout?radio=3027", wr: 27 },
+    { name: "RFM Run & Fit",           tag: "Sport · Énergie",   group: "RFM",      accent: "255, 80, 60",   url: "https://rfm.lmn.fm/rfm-wr28.mp3", logo: `${RFM}/rfm-run-and-fit/492963-1-fre-FR/RFM-Run-and-Fit.jpg`,                  metaUrl: "https://direct-radio.rfm.fr/playout?radio=3028", wr: 28 },
+    { name: "RFM Disco",               tag: "Disco",             group: "RFM",      accent: "180, 60, 180",  url: "https://rfm.lmn.fm/rfm-wr29.mp3", logo: `${RFM}/rfm-disco/469888-1-fre-FR/RFM-Disco.jpg`,                              metaUrl: "https://direct-radio.rfm.fr/playout?radio=3029", wr: 29 },
+    { name: "RFM Party 80",            tag: "Fête · Années 80",  group: "RFM",      accent: "220, 100, 40",  url: "https://rfm.lmn.fm/rfm-wr30.mp3", logo: `${RFM}/rfm-party-80/499872-3-fre-FR/RFM-Party-80.png`,                        metaUrl: "https://direct-radio.rfm.fr/playout?radio=3030", wr: 30 },
   ];
 
-  const audio       = document.getElementById("audio");
-  const playBtn     = document.getElementById("playBtn");
-  const player      = document.getElementById("player");
-  const nowName     = document.getElementById("nowName");
-  const nowTrack    = document.getElementById("nowTrack");
-  const nowArtist   = document.getElementById("nowArtist");
-  const nowStatus   = document.getElementById("nowStatus");
-  const list        = document.getElementById("list");
-  const search      = document.getElementById("q");
-  const volInput    = document.getElementById("vol");
-  const wave        = document.getElementById("wave");
-  const playerArtImg         = document.getElementById("playerArtImg");
-  const playerArtPlaceholder = document.getElementById("playerArtPlaceholder");
-  const historyToggle = document.getElementById("historyToggle");
+  const audio     = document.getElementById("audio");
+  const app       = document.getElementById("app");
+  const playBtn   = document.getElementById("playBtn");
+  const prevBtn   = document.getElementById("prevBtn");
+  const nextBtn   = document.getElementById("nextBtn");
+  const themeBtn  = document.getElementById("themeBtn");
+  const list      = document.getElementById("list");
+  const search    = document.getElementById("q");
+  const volInput  = document.getElementById("vol");
+  const wave      = document.getElementById("wave");
+  const art       = document.getElementById("art");
+  const artInit   = document.getElementById("artInitials");
+  const artLogo   = document.getElementById("artLogo");
+  const artCover  = document.getElementById("artCover");
+  const nowStation= document.getElementById("nowStation");
+  const nowTitle  = document.getElementById("nowTitle");
+  const nowArtist = document.getElementById("nowArtist");
+  const nowSub    = document.getElementById("nowSub");
+  const tabs      = document.getElementById("tabs");
+  const segInd    = document.getElementById("segInd");
+  const toast     = document.getElementById("toast");
+
+  let current = null;
+  let currentFilter = "all";
+  let audioCtx, analyser, dataArray, source;
+  let metaTimer = null;
+  let lastTrackId = null;
+  let retryTimer = null;
+  let retryCount = 0;
+  let trackHistory = [];
+  let accentFrom = [255, 107, 74];
+  let accentTo   = [255, 107, 74];
+  let accentAnim = null;
+  const BARS = 28;
+
   const historyPanel  = document.getElementById("historyPanel");
   const historyList   = document.getElementById("historyList");
-  const wallpaper     = document.querySelector(".wallpaper");
+  const library       = document.querySelector(".library");
 
-  // Waveform bars (decorative)
-  wave.innerHTML = Array.from({length: 42}, () => "<span></span>").join("");
+  // Build waveform bars
+  wave.innerHTML = Array.from({length: BARS}, () => "<span></span>").join("");
+  const waveBars = wave.querySelectorAll("span");
 
-  let current     = null;
-  let metaTimer   = null;
-  let lastTrackId = null;
-  let trackHistory = []; // [{title, artist, imageUrl, time}]
-
-  // ── Dynamic background color ─────────────────────────────────────────────────
-  // Couleurs directement issues des classes .c-1 à .c-8 — pas de CORS
-  const COLOR_MAP = {
-    1: [255, 107, 107],   // rouge
-    2: [94,  139, 255],   // bleu
-    3: [255, 167,  81],   // orange
-    4: [46,  204, 113],   // vert
-    5: [165, 107, 255],   // violet
-    6: [23,  195, 178],   // teal
-    7: [255, 140, 195],   // rose
-    8: [74,   86, 104],   // ardoise
-    9: [255, 209, 102],   // jaune
-  };
-
-  function applyDynamicColor(colorIndex) {
-    const rgb = COLOR_MAP[colorIndex];
-    if (!rgb) { resetDynamicColor(); return; }
-    const [r, g, b] = rgb;
-    const blob1 = `radial-gradient(circle, rgba(${r},${g},${b},0.65) 0%, transparent 60%)`;
-    // Complémentaire adoucie pour le second blob
-    const r2 = Math.round(r * 0.4 + (255 - r) * 0.6);
-    const g2 = Math.round(g * 0.4 + (255 - g) * 0.6);
-    const b2 = Math.round(b * 0.4 + (255 - b) * 0.6);
-    const blob2 = `radial-gradient(circle, rgba(${r2},${g2},${b2},0.5) 0%, transparent 60%)`;
-    let dynStyle = document.getElementById("dynStyle");
-    if (!dynStyle) { dynStyle = document.createElement("style"); dynStyle.id = "dynStyle"; document.head.appendChild(dynStyle); }
-    dynStyle.textContent = `
-      .wallpaper::before { background: ${blob1} !important; transition: background 2s ease; }
-      .wallpaper::after  { background: ${blob2} !important; transition: background 2s ease; }
-    `;
-    document.documentElement.style.setProperty("--accent", `rgb(${r},${g},${b})`);
-  }
-
-  function resetDynamicColor() {
-    const dynStyle = document.getElementById("dynStyle");
-    if (dynStyle) dynStyle.textContent = `
-      .wallpaper::before { background: radial-gradient(circle, #a8c3ff 0%, transparent 60%) !important; transition: background 2s ease; }
-      .wallpaper::after  { background: radial-gradient(circle, #ffb088 0%, transparent 60%) !important; transition: background 2s ease; }
-    `;
-    document.documentElement.style.setProperty("--accent", "#0a84ff");
-  }
-
-  // ── Metadata polling ────────────────────────────────────────────────────────
-  async function fetchMeta() {
-    const s = STATIONS[current];
-    if (!s || !s.metaUrl) return;
-    try {
-      const res  = await fetch(s.metaUrl);
-      const data = await res.json();
-      const all  = data.nowplaying || [];
-      const np   = all.find(t => t.status === "playing") || all[0];
-      if (!np) return;
-
-      // Only update UI if track changed
-      if (np.id === lastTrackId) return;
-      lastTrackId = np.id;
-
-      nowTrack.textContent  = np.title  || "—";
-      nowArtist.textContent = np.artist || "";
-
-      // History: add to front, keep last 10, deduplicate by id
-      if (np.title) {
-        trackHistory = [
-          { id: np.id, title: np.title, artist: np.artist || "", imageUrl: np.imageUrl || "", time: new Date(), station: s.name },
-          ...trackHistory.filter(t => t.id !== np.id)
-        ].slice(0, 10);
-
-        // Also push history items from API (status: "history")
-        const histItems = all.filter(t => t.status === "history" && t.title);
-        histItems.forEach(h => {
-          if (!trackHistory.find(t => t.id === h.id)) {
-            trackHistory.push({ id: h.id, title: h.title, artist: h.artist || "", imageUrl: h.imageUrl || "", time: new Date(h.time || Date.now()), station: s.name });
-          }
-        });
-        trackHistory = trackHistory.slice(0, 10);
-        renderHistory();
-      }
-
-      // Album art
-      if (np.imageUrl) {
-        const img = new Image();
-        img.onload = () => {
-          playerArtImg.src = np.imageUrl;
-          playerArtImg.classList.remove("hidden");
-          playerArtPlaceholder.style.display = "none";
-        };
-        img.onerror = clearArt;
-        img.src = np.imageUrl;
-      } else {
-        clearArt();
-      }
-    } catch (e) {
-      // Silent fail — no meta available
-    }
-  }
-
-  function clearArt() {
-    playerArtImg.classList.add("hidden");
-    playerArtImg.src = "";
-    playerArtPlaceholder.style.display = "";
-  }
-
-  function startMetaPolling() {
-    stopMetaPolling();
-    fetchMeta();
-    metaTimer = setInterval(fetchMeta, 30000);
-  }
-
-  function stopMetaPolling() {
-    if (metaTimer) { clearInterval(metaTimer); metaTimer = null; }
-    lastTrackId = null;
-    trackHistory = [];
-    nowTrack.textContent  = "—";
-    nowArtist.textContent = "";
-    clearArt();
-    renderHistory();
-  }
-
-  // ── History rendering ────────────────────────────────────────────────────────
-  function renderHistory() {
-    if (trackHistory.length === 0) {
-      historyList.innerHTML = `<li class="history-empty">Aucun titre récent</li>`;
-      return;
-    }
-    historyList.innerHTML = trackHistory.map((t, idx) => {
-      const timeStr = t.time ? t.time.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) : "";
-      const isNow = idx === 0;
-      return `
-        <li class="history-item">
-          <div class="history-thumb">
-            ${t.imageUrl
-              ? `<img src="${escapeHtml(t.imageUrl)}" alt="" loading="lazy" onerror="this.parentElement.innerHTML='<div class=history-thumb-placeholder>♪</div>'" />`
-              : `<div class="history-thumb-placeholder">♪</div>`}
-          </div>
-          <div class="history-body">
-            <div class="history-title">${escapeHtml(t.title)}</div>
-            <div class="history-artist">${escapeHtml(t.artist)}</div>
-            ${t.station ? `<div class="history-station">${escapeHtml(t.station)}</div>` : ""}
-          </div>
-          <div class="history-time">${isNow ? "🎵" : timeStr}</div>
-        </li>`;
-    }).join("");
-  }
-
-  // History toggle
-  historyToggle.addEventListener("click", () => {
-    const isOpen = historyPanel.classList.toggle("is-open");
-    historyToggle.classList.toggle("is-open", isOpen);
-    historyToggle.setAttribute("aria-expanded", isOpen);
-    historyPanel.setAttribute("aria-hidden", !isOpen);
+  // Theme
+  const savedTheme = localStorage.getItem("radio.theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  document.documentElement.dataset.theme = savedTheme;
+  themeBtn.addEventListener("click", () => {
+    const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+    document.documentElement.dataset.theme = next;
+    localStorage.setItem("radio.theme", next);
   });
 
-  // ── Restore saved state ─────────────────────────────────────────────────────
+  // Restore state
   const saved = JSON.parse(localStorage.getItem("radio.state") || "{}");
   audio.volume = typeof saved.volume === "number" ? saved.volume : 0.8;
   volInput.value = audio.volume;
 
-  // ── Favorites ────────────────────────────────────────────────────────────────
-  let favs = new Set(JSON.parse(localStorage.getItem("radio.favs") || "[]"));
-  function saveFavs() { localStorage.setItem("radio.favs", JSON.stringify([...favs])); }
-  function toggleFav(i) {
-    if (favs.has(i)) favs.delete(i); else favs.add(i);
-    saveFavs();
-    renderList();
-  }
-
-  // ── Filter state ─────────────────────────────────────────────────────────────
-  let activeFilter = "all";
-
-  document.querySelectorAll(".filter-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      activeFilter = btn.dataset.filter;
-      document.querySelectorAll(".filter-btn").forEach(b => b.classList.toggle("is-active", b === btn));
-      renderList(search.value);
-    });
-  });
-
-  function renderList(filter = "") {
-    const f = filter.trim().toLowerCase();
-    let items = STATIONS.map((s, i) => ({ s, i }));
-
-    // Brand filter
-    if (activeFilter === "europe2") items = items.filter(({s}) => s.name.toLowerCase().includes("europe 2") || s.name.toLowerCase() === "work");
-    else if (activeFilter === "rfm")  items = items.filter(({s}) => s.name.toLowerCase().startsWith("rfm"));
-    else if (activeFilter === "favs") items = items.filter(({_, i}) => favs.has(i));
-
-    // Search filter
-    if (f) items = items.filter(({s}) => s.name.toLowerCase().includes(f) || s.tag.toLowerCase().includes(f));
-
-    if (items.length === 0) {
-      list.innerHTML = activeFilter === "favs"
-        ? `<li class="empty">⭐ Aucun favori pour l'instant — clique sur une étoile !</li>`
-        : `<li class="empty">Aucune station ne correspond à « ${filter} »</li>`;
-      return;
-    }
-
-    list.innerHTML = items.map(({s, i}) => `
-      <li class="station ${current === i ? "is-active" : ""}" role="option" data-i="${i}" tabindex="0">
-        <div class="station-icon c-${s.color}">
-          ${s.logo
-            ? `<img src="${escapeHtml(s.logo)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'" style="width:100%;height:100%;object-fit:cover;border-radius:9px;display:block;" /><span style="display:none;place-items:center;width:100%;height:100%;">${initials(s.name)}</span>`
-            : initials(s.name)
-          }
-        </div>
-        <div class="station-body">
-          <div class="station-name">
-            ${escapeHtml(s.name)}
-            <span class="playing-ind" aria-hidden="true"><i></i><i></i><i></i></span>
-          </div>
-          <div class="station-tag">${escapeHtml(s.tag)}${s.wr ? ` · WR${s.wr}` : ""}</div>
-        </div>
-        <button class="station-fav ${favs.has(i) ? 'is-fav' : ''}" data-fav="${i}" aria-label="${favs.has(i) ? 'Retirer des favoris' : 'Ajouter aux favoris'}">★</button>
-        <button class="station-action" aria-label="${current === i ? "Pause" : "Lecture"} ${escapeHtml(s.name)}">
-          ${current === i && player.classList.contains("is-playing")
-            ? `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6.5" y="5" width="4" height="14" rx="1.2"/><rect x="13.5" y="5" width="4" height="14" rx="1.2"/></svg>`
-            : `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.54.84l10.2-6.5a1 1 0 0 0 0-1.68L9.54 4.66A1 1 0 0 0 8 5.5z"/></svg>`}
-        </button>
-      </li>
-    `).join("");
-
-    // Fav click handler
-    list.querySelectorAll(".station-fav").forEach(btn => {
-      btn.addEventListener("click", e => {
-        e.stopPropagation();
-        toggleFav(Number(btn.dataset.fav));
-      });
-    });
-  }
-
   function initials(name) {
-    // Strip a common prefix ("Europe 2 …") so the sigil reflects the sub-brand
     let clean = name.replace(/^Europe\s*2\s+/i, "").replace(/[—–·].*/, "").trim();
     if (!clean) clean = name;
-    // Take first 2 letters of first word if single word, else first letter of first 2 words
     const parts = clean.split(/\s+/).filter(Boolean);
-    if (parts.length === 1) {
-      return parts[0].slice(0, 2).toUpperCase();
-    }
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
     return ((parts[0][0] ?? "") + (parts[1][0] ?? "")).toUpperCase();
   }
 
@@ -1266,90 +867,329 @@
     return s.replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
   }
 
-  function selectStation(i, autoplay = true) {
-    const s = STATIONS[i];
-    if (!s) return;
-    if (current === i) {
-      togglePlay();
-      return;
-    }
-    current = i;
-    audio.src = s.url;
-    nowName.textContent = s.name;
-    nowStatus.textContent = s.tag;
-    player.classList.remove("is-playing");
-    stopMetaPolling();
-    applyDynamicColor(s.color);
-    renderList(search.value);
-    localStorage.setItem("radio.state", JSON.stringify({
-      stationIndex: i,
-      volume: audio.volume
-    }));
-    if (autoplay) play();
-  }
-
-  function play() {
-    if (!audio.src) return;
-    player.classList.add("is-loading");
-    nowStatus.textContent = "Connexion…";
-    audio.play()
-      .then(() => {
-        player.classList.remove("is-loading");
-        player.classList.add("is-playing");
-        nowStatus.textContent = "En direct · " + (STATIONS[current]?.tag ?? "");
-        renderList(search.value);
-        if (STATIONS[current]?.metaUrl) startMetaPolling();
-      })
-      .catch(err => {
-        player.classList.remove("is-loading", "is-playing");
-        nowStatus.textContent = "Impossible de lire ce flux";
-        console.warn(err);
-        renderList(search.value);
+  function visibleStations() {
+    const q = search.value.trim().toLowerCase();
+    return STATIONS
+      .map((s, i) => ({ s, i }))
+      .filter(({s}) => {
+        if (currentFilter !== "all" && s.group !== currentFilter) return false;
+        if (q && !s.name.toLowerCase().includes(q) && !s.tag.toLowerCase().includes(q)) return false;
+        return true;
       });
   }
 
-  function pause() {
-    audio.pause();
-    player.classList.remove("is-playing");
-    stopMetaPolling();
-    if (current !== null) {
-      nowStatus.textContent = "En pause";
+  function renderList() {
+    const items = visibleStations();
+    if (items.length === 0) {
+      list.innerHTML = `
+        <div class="empty">
+          <div class="empty-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+              <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
+            </svg>
+          </div>
+          ${"Aucune station ne correspond."}
+        </div>`;
+      return;
     }
-    renderList(search.value);
+    list.innerHTML = items.map(({s, i}) => {
+      const gradient = `linear-gradient(135deg, rgb(${s.accent}), rgba(${s.accent}, 0.5))`;
+      const logoHtml = s.logo
+        ? `<img src="${escapeHtml(s.logo)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block'" /><span class="initials-fallback" style="display:none">${initials(s.name)}</span>`
+        : `<span class="initials-fallback">${initials(s.name)}</span>`;
+      return `
+      <button class="station ${current === i ? "is-active" : ""}" data-i="${i}" role="option">
+        <div class="station-art" style="background:${gradient}">${logoHtml}</div>
+        <div class="playing-chip" aria-hidden="true"><i></i><i></i><i></i></div>
+        <div class="station-name">${escapeHtml(s.name)}</div>
+        <div class="station-tag">${escapeHtml(s.tag)}${s.wr ? ` · WR${s.wr}` : ""}</div>
+      </button>`;
+    }).join("");
   }
 
+  // ── Smooth accent interpolation ──────────────────────────────────────────────
+  function parseRgb(str) { return str.split(",").map(Number); }
+
+  function setAccent(rgbStr) {
+    accentFrom = parseRgb(getComputedStyle(document.documentElement).getPropertyValue("--accent-rgb").trim() || "255,107,74");
+    accentTo   = parseRgb(rgbStr);
+    const start = performance.now();
+    const dur   = 700;
+    if (accentAnim) cancelAnimationFrame(accentAnim);
+    function step(now) {
+      const t = Math.min((now - start) / dur, 1);
+      const ease = t < 0.5 ? 2*t*t : -1+(4-2*t)*t; // easeInOut
+      const r = Math.round(accentFrom[0] + (accentTo[0] - accentFrom[0]) * ease);
+      const g = Math.round(accentFrom[1] + (accentTo[1] - accentFrom[1]) * ease);
+      const b = Math.round(accentFrom[2] + (accentTo[2] - accentFrom[2]) * ease);
+      document.documentElement.style.setProperty("--accent-rgb", `${r}, ${g}, ${b}`);
+      if (t < 1) accentAnim = requestAnimationFrame(step);
+    }
+    accentAnim = requestAnimationFrame(step);
+  }
+
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add("show");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => toast.classList.remove("show"), 1800);
+  }
+
+  // ── Logo / cover helpers ─────────────────────────────────────────────────────
+  function showLogo(s) {
+    artLogo.classList.remove("visible");
+    artCover.classList.remove("visible");
+    if (s.logo) {
+      const tmp = new Image();
+      tmp.onload = () => { artLogo.src = s.logo; artLogo.classList.add("visible"); artInit.style.opacity = "0"; };
+      tmp.onerror = () => { artLogo.classList.remove("visible"); artInit.style.opacity = "1"; };
+      tmp.src = s.logo;
+    } else {
+      artInit.style.opacity = "1";
+    }
+  }
+
+  function showCover(url) {
+    if (!url) { artCover.classList.remove("visible"); return; }
+    const tmp = new Image();
+    tmp.onload = () => { artCover.src = url; artCover.classList.add("visible"); };
+    tmp.onerror = () => artCover.classList.remove("visible");
+    tmp.src = url;
+  }
+
+  // ── Metadata polling ─────────────────────────────────────────────────────────
+  async function fetchMeta() {
+    const s = STATIONS[current];
+    if (!s?.metaUrl) return;
+    try {
+      const data = await fetch(s.metaUrl).then(r => r.json());
+      const all  = data.nowplaying || [];
+      const np   = all.find(t => t.status === "playing") || all[0];
+      if (!np || np.id === lastTrackId) return;
+      lastTrackId = np.id;
+      nowTitle.textContent  = np.title  || s.tag;
+      nowArtist.textContent = np.artist || "";
+      showCover(np.imageUrl || "");
+
+      // Build history (playing + history entries)
+      if (np.title) {
+        const entry = { id: np.id, title: np.title, artist: np.artist || "", imageUrl: np.imageUrl || "", time: new Date() };
+        trackHistory = [entry, ...trackHistory.filter(t => t.id !== np.id)];
+        // Also add API history items
+        all.filter(t => t.status === "history" && t.title && !trackHistory.find(h => h.id === t.id))
+           .forEach(t => trackHistory.push({ id: t.id, title: t.title, artist: t.artist || "", imageUrl: t.imageUrl || "", time: new Date(t.time || 0) }));
+        trackHistory = trackHistory.slice(0, 8);
+        renderHistory();
+      }
+    } catch { /* silent */ }
+  }
+
+  function renderHistory() {
+    if (trackHistory.length === 0) { historyPanel.style.display = "none"; return; }
+    historyPanel.style.display = "";
+    historyList.innerHTML = trackHistory.map((t, idx) => {
+      const time = idx === 0 ? "🎵" : t.time.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+      return `<div class="history-item">
+        <div class="history-thumb">
+          ${t.imageUrl
+            ? `<img src="${escapeHtml(t.imageUrl)}" alt="" onerror="this.parentElement.innerHTML='<div class=history-thumb-placeholder>♪</div>'" />`
+            : `<div class="history-thumb-placeholder">♪</div>`}
+        </div>
+        <div class="history-body">
+          <div class="history-track">${escapeHtml(t.title)}</div>
+          <div class="history-artist">${escapeHtml(t.artist)}</div>
+        </div>
+        <div class="history-time">${time}</div>
+      </div>`;
+    }).join("");
+  }
+
+  function startMetaPolling() {
+    stopMetaPolling();
+    fetchMeta();
+    metaTimer = setInterval(fetchMeta, 15000);
+  }
+
+  function stopMetaPolling() {
+    if (metaTimer) { clearInterval(metaTimer); metaTimer = null; }
+    lastTrackId = null;
+    trackHistory = [];
+    artCover.classList.remove("visible");
+    nowArtist.textContent = "";
+    historyPanel.style.display = "none";
+    historyList.innerHTML = "";
+  }
+
+  function selectStation(i, autoplay = true) {
+    const s = STATIONS[i];
+    if (!s) return;
+    if (current === i) { togglePlay(); return; }
+
+    art.classList.add("is-switching");
+    setTimeout(() => art.classList.remove("is-switching"), 350);
+
+    current = i;
+    retryCount = 0;
+    if (retryTimer) { clearTimeout(retryTimer); retryTimer = null; }
+    audio.src = s.url;
+    setAccent(s.accent);
+    artInit.textContent = initials(s.name);
+    art.style.background = `linear-gradient(135deg, rgb(${s.accent}), rgba(${s.accent}, 0.4))`;
+    nowStation.textContent = s.name;
+    nowTitle.textContent   = s.tag;
+    nowArtist.textContent  = "";
+    nowSub.textContent     = "En direct";
+    app.classList.remove("is-playing");
+    stopMetaPolling();
+    showLogo(s);
+    renderList();
+
+    localStorage.setItem("radio.state", JSON.stringify({ stationIndex: i, volume: audio.volume }));
+    if (autoplay) play();
+  }
+
+  function setupAudioGraph() {
+    if (audioCtx) return;
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 128;
+      analyser.smoothingTimeConstant = 0.75;
+      source = audioCtx.createMediaElementSource(audio);
+      source.connect(analyser);
+      analyser.connect(audioCtx.destination);
+      dataArray = new Uint8Array(analyser.frequencyBinCount);
+      requestAnimationFrame(animateWave);
+    } catch (e) { /* CORS may block — fallback animation */ }
+  }
+
+  function animateWave() {
+    if (!analyser) return;
+    analyser.getByteFrequencyData(dataArray);
+    const step = Math.floor(dataArray.length / BARS);
+    for (let i = 0; i < BARS; i++) {
+      const v = dataArray[i * step] / 255;
+      const h = app.classList.contains("is-playing") ? Math.max(4, v * 44) : 4;
+      waveBars[i].style.height = h + "px";
+    }
+    requestAnimationFrame(animateWave);
+  }
+
+  // Fallback — if analyser is blocked (CORS), fake the waveform
+  function fakeWave() {
+    if (analyser) return; // real one running
+    for (let i = 0; i < BARS; i++) {
+      const v = app.classList.contains("is-playing") ? (Math.sin(Date.now()/200 + i*0.6) * 0.5 + 0.5) * Math.random() : 0;
+      const h = Math.max(4, v * 40);
+      waveBars[i].style.height = h + "px";
+    }
+    requestAnimationFrame(fakeWave);
+  }
+  requestAnimationFrame(fakeWave);
+
+  function play() {
+    if (!audio.src) return;
+    nowSub.textContent = "Connexion…";
+    setupAudioGraph();
+    if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+    audio.play()
+      .then(() => {
+        app.classList.add("is-playing");
+        nowSub.textContent = "En direct";
+        retryCount = 0;
+      })
+      .catch(() => {
+        app.classList.remove("is-playing");
+        nowSub.textContent = "Impossible de lire ce flux";
+      });
+  }
+  function pause() {
+    audio.pause();
+    app.classList.remove("is-playing");
+    if (retryTimer) { clearTimeout(retryTimer); retryTimer = null; }
+    if (current !== null) nowSub.textContent = "En pause";
+  }
   function togglePlay() {
     if (!audio.src) return;
-    if (audio.paused) play();
-    else pause();
+    if (audio.paused) play(); else pause();
+  }
+
+  // ── Stalled / auto-retry ─────────────────────────────────────────────────────
+  function scheduleRetry() {
+    if (retryTimer) return;
+    retryCount++;
+    const delay = Math.min(3000 * retryCount, 15000);
+    nowSub.textContent = `Reconnexion dans ${Math.round(delay/1000)}s…`;
+    retryTimer = setTimeout(() => {
+      retryTimer = null;
+      if (current === null) return;
+      nowSub.textContent = "Reconnexion…";
+      audio.load();
+      audio.play().then(() => {
+        app.classList.add("is-playing");
+        nowSub.textContent = "En direct";
+        retryCount = 0;
+      }).catch(() => scheduleRetry());
+    }, delay);
+  }
+
+  audio.addEventListener("stalled", () => {
+    app.classList.remove("is-playing");
+    scheduleRetry();
+  });
+  audio.addEventListener("waiting", () => {
+    if (!audio.paused) nowSub.textContent = "Mise en mémoire…";
+  });
+  audio.addEventListener("playing", () => {
+    app.classList.add("is-playing");
+    nowSub.textContent = "En direct";
+    if (retryTimer) { clearTimeout(retryTimer); retryTimer = null; }
+    if (STATIONS[current]?.metaUrl && !metaTimer) startMetaPolling();
+  });
+  audio.addEventListener("pause", () => app.classList.remove("is-playing"));
+  audio.addEventListener("error", () => {
+    app.classList.remove("is-playing");
+    stopMetaPolling();
+    scheduleRetry();
+  });
+
+  function step(dir) {
+    const items = visibleStations().map(x => x.i);
+    if (items.length === 0) return;
+    const idx = items.indexOf(current);
+    const next = idx === -1 ? items[0] : items[(idx + dir + items.length) % items.length];
+    selectStation(next, true);
   }
 
   // Events
   playBtn.addEventListener("click", togglePlay);
+  prevBtn.addEventListener("click", () => step(-1));
+  nextBtn.addEventListener("click", () => step(1));
 
   list.addEventListener("click", (e) => {
-    const actionBtn = e.target.closest(".station-action");
-    const row       = e.target.closest(".station");
-    if (!row) return;
-    const i = Number(row.dataset.i);
-    if (actionBtn) {
-      e.stopPropagation();
-      selectStation(i, true);
-    } else {
-      selectStation(i, true);
-    }
-  });
-
-  list.addEventListener("keydown", (e) => {
     const row = e.target.closest(".station");
-    if (!row) return;
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      selectStation(Number(row.dataset.i), true);
-    }
+    if (row) selectStation(Number(row.dataset.i), true);
   });
 
-  search.addEventListener("input", () => renderList(search.value));
+  search.addEventListener("input", renderList);
+
+  // Segmented control
+  function moveIndicator() {
+    const active = tabs.querySelector("button.is-active");
+    if (!active) return;
+    const r = active.getBoundingClientRect();
+    const pr = tabs.getBoundingClientRect();
+    segInd.style.width = r.width + "px";
+    segInd.style.transform = `translateX(${r.left - pr.left - 3}px)`;
+  }
+  tabs.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-filter]");
+    if (!btn) return;
+    tabs.querySelectorAll("button").forEach(b => b.classList.toggle("is-active", b === btn));
+    currentFilter = btn.dataset.filter;
+    moveIndicator();
+    renderList();
+  });
 
   volInput.addEventListener("input", () => {
     audio.volume = Number(volInput.value);
@@ -1358,306 +1198,11 @@
     localStorage.setItem("radio.state", JSON.stringify(st));
   });
 
-  audio.addEventListener("stalled", () => {
-    nowStatus.textContent = "Mise en mémoire…";
-  });
-  audio.addEventListener("playing", () => {
-    player.classList.remove("is-loading");
-    player.classList.add("is-playing");
-    nowStatus.textContent = "En direct · " + (STATIONS[current]?.tag ?? "");
-    renderList(search.value);
-    if (STATIONS[current]?.metaUrl && !metaTimer) startMetaPolling();
-  });
-  audio.addEventListener("pause", () => {
-    player.classList.remove("is-playing");
-  });
-  audio.addEventListener("error", () => {
-    player.classList.remove("is-playing", "is-loading");
-    stopMetaPolling();
-    nowStatus.textContent = "Erreur de flux — essayez une autre station";
-    renderList(search.value);
-  });
-
-  // ── Quiz ─────────────────────────────────────────────────────────────────────
-  const QUIZ = [
-    {
-      q: "C'est quoi ton mood là, maintenant ?",
-      hint: "Sois honnête 😄",
-      choices: [
-        { emoji: "⚡", label: "Full énergie",   val: "energy"    },
-        { emoji: "🕰️", label: "Nostalgie",      val: "nostalgia" },
-        { emoji: "❤️", label: "Mood romantique", val: "romantic"  },
-        { emoji: "🌿", label: "Détente totale",  val: "chill"     },
-      ]
-    },
-    {
-      q: "T'es en train de faire quoi ?",
-      hint: "On ne juge pas",
-      choices: [
-        { emoji: "🏃", label: "Sport / Cardio",     val: "sport"  },
-        { emoji: "💻", label: "Boulot / Concentration", val: "work" },
-        { emoji: "🥳", label: "Soirée / Fête",      val: "party"  },
-        { emoji: "🛋️", label: "Flemme au canapé",   val: "home"   },
-      ]
-    },
-    {
-      q: "Ta décennie musicale préférée ?",
-      hint: "Celle qui fait tout de suite sourire",
-      choices: [
-        { emoji: "🕺", label: "70s / 80s",    val: "old"     },
-        { emoji: "📼", label: "90s / 2000s",  val: "retro"   },
-        { emoji: "📱", label: "2010s / 2020s", val: "recent" },
-        { emoji: "🎭", label: "Peu importe !",  val: "any"    },
-      ]
-    },
-    {
-      q: "France ou international ?",
-      hint: "Là tout de suite",
-      choices: [
-        { emoji: "🇫🇷", label: "Chanson française", val: "french" },
-        { emoji: "🌍", label: "International",       val: "intl"   },
-        { emoji: "🎭", label: "Un mix des deux",     val: "mix"    },
-        { emoji: "🎬", label: "Musiques de films",   val: "cine"   },
-      ]
-    },
-    {
-      q: "Ton vibe musical du moment ?",
-      hint: "Dernier choix, on y est presque !",
-      choices: [
-        { emoji: "🎸", label: "Rock / Pop Rock",   val: "rock"    },
-        { emoji: "💜", label: "Électro / Dance",   val: "electro" },
-        { emoji: "🎷", label: "Soul / R'n'B",      val: "soul"    },
-        { emoji: "🌊", label: "Doux / Acoustique", val: "soft"    },
-      ]
-    },
-  ];
-
-  // Scoring: chaque réponse donne des points à des indices de stations
-  // On mappe les valeurs de réponses vers des stations emblématiques (index dans STATIONS)
-  const QUIZ_SCORES = {
-    // mood
-    energy:    [3, 10, 18, 30],   // Hits, Cardio, Dance, RFM Party 90
-    nostalgia: [1, 11, 27, 29],   // Classics, 90s, RFM Collector, RFM 80'
-    romantic:  [16, 12, 33, 28],  // Love, Millenium, RFM Love, RFM Slow
-    chill:     [26, 24, 32, 35],  // Zen, Home, RFM Lounge, RFM California
-    // activité
-    sport:     [10, 21, 53],      // Cardio, Running, RFM Run&Fit
-    work:      [25, 6, 32],       // Work, Live, RFM Lounge
-    party:     [18, 3, 30, 51],   // Dance, Hits, RFM Party 90, RFM Hit Party
-    home:      [24, 16, 34],      // Home, Love, RFM California
-    // décennie
-    old:       [1, 27, 29, 42],   // Classics, Collector, 80', RFM 70s
-    retro:     [11, 12, 30, 47],  // 90s, Millenium, Party 90, RFM 80-90
-    recent:    [3, 20, 50, 51],   // Hits, Pop 2020, RFM Hit 2010, Hit Party
-    any:       [5, 27, 36],       // Mix, Collector, RFM Top 50
-    // langue
-    french:    [8, 36, 22, 43],   // 100%Fr, RFM 100%Fr, Duos, RFM Nouvelle Scène
-    intl:      [0, 3, 36, 50],    // New, Hits, Top50, Hit2010
-    mix:       [5, 27, 35],       // Mix, Collector, RFM California
-    cine:      [19, 54],          // Ciné, RFM Cinéma
-    // vibe
-    rock:      [4, 14, 15, 46],   // Rock, Pop Rock, French Touch, RFM New Wave
-    electro:   [18, 15, 48],      // Dance, French Touch, RFM Funk
-    soul:      [23, 48, 39],      // Soul R'n'B, RFM Funk, RFM Night Fever
-    soft:      [2, 9, 26, 31],    // Acoustic, Slow, Zen, RFM Lounge
-  };
-
-  // Descriptions courtes pour le résultat
-  const STATION_DESCS = {
-    0:  "Les toutes dernières sorties, avant tout le monde.",
-    1:  "Les classiques qui ont forgé la légende Europe 2.",
-    2:  "La musique dans sa version la plus pure et épurée.",
-    3:  "Les hits du moment qui cartonnent en ce moment.",
-    4:  "Le rock dans toute sa splendeur, guitares en avant.",
-    5:  "Un mix parfait pour ne pas choisir.",
-    6:  "Le direct Europe 2, live et sans filtre.",
-    7:  "Les talents de demain, découverts aujourd'hui.",
-    8:  "100% chanson française, de Goldman à Vianney.",
-    9:  "Les plus beaux slows pour danser joue contre joue.",
-    10: "L'énergie cardio pour dépasser tes limites.",
-    11: "Les tubes des années 90, indestructibles.",
-    12: "Les hits des années 2000, déjà nostalgiques.",
-    13: "Pop féminine et puissante, de Beyoncé à Ava Max.",
-    14: "Le meilleur de la pop et du rock mélangés.",
-    15: "L'électro française dans toute sa créativité.",
-    16: "Les plus belles chansons d'amour, toutes générations.",
-    17: "La pop des années 2010, fraîche et efficace.",
-    18: "Dance et club, pour bouger même assis.",
-    19: "Les plus belles bandes originales de films.",
-    20: "La pop actuelle des années 2020.",
-    21: "Le tempo parfait pour courir plus vite.",
-    22: "Les duos qui font chavirer les cœurs.",
-    23: "Soul, R'n'B et groove à l'état pur.",
-    24: "La playlist parfaite pour rester chez soi.",
-    25: "Concentration maximale, productivité maximale.",
-    26: "Détente, sérénité et musiques apaisantes.",
-    27: "Le meilleur de RFM Collector, intemporel.",
-    28: "Disco et funk qui font vibrer la piste.",
-    29: "La programmation mythique de RFM.",
-    30: "Les meilleurs sons des années 80.",
-    31: "Les tubes des années 90, version RFM.",
-    32: "Lounge et douceur pour se poser.",
-    33: "Le top 50 RFM, les hits qui cartonnent.",
-    34: "California dreamin' et Soft Rock ensoleillé.",
-    35: "Les plus belles chansons d'amour selon RFM.",
-    36: "Pop Rock entre douceur et puissance.",
-    37: "100% chansons françaises et francophones.",
-    38: "New Wave et post-punk, une époque dorée.",
-    39: "Les slows pour un quart d'heure américain.",
-    40: "80s et 90s réunis, le meilleur des deux.",
-    41: "Les chagrins d'amour mis en musique.",
-    42: "Le meilleur des années 70, funky et solaire.",
-    43: "Le mix de Yann Muller, énergie garantie.",
-    44: "Les plus belles musiques de films selon RFM.",
-    45: "Les hits des années 2000 qui restent en tête.",
-    46: "Les tubes des années 2010 qu'on rechante encore.",
-    47: "Le meilleur de la musique jouée en live.",
-    48: "Les talents de demain selon RFM.",
-    49: "Le charme des chansons italiennes.",
-    50: "Les plus belles chansons de Noël.",
-    51: "La route s'écoute mieux avec RFM On The Road.",
-    52: "Funk pur et groove assumé.",
-    53: "La playlist sport de RFM pour se dépasser.",
-    54: "Le meilleur du Disco, de Travolta à aujourd'hui.",
-    55: "Les tubes des années 80, version fête.",
-  };
-
-  let quizAnswers = [];
-  let quizStep = 0;
-
-  function openQuiz() {
-    quizAnswers = [];
-    quizStep = 0;
-    quizOverlay.classList.add("is-open");
-    renderQuizStep();
-  }
-
-  function closeQuiz() {
-    quizOverlay.classList.remove("is-open");
-  }
-
-  function renderQuizStep() {
-    const q = QUIZ[quizStep];
-    quizInner.innerHTML = `
-      <div class="quiz-progress">
-        ${QUIZ.map((_, i) => `<span class="${i < quizStep ? 'done' : ''}"></span>`).join("")}
-      </div>
-      <div class="quiz-question">${q.q}</div>
-      <div class="quiz-hint">${q.hint}</div>
-      <div class="quiz-choices">
-        ${q.choices.map(c => `
-          <button class="quiz-choice" data-val="${c.val}">
-            <span class="choice-emoji">${c.emoji}</span>
-            ${c.label}
-          </button>`).join("")}
-      </div>`;
-
-    quizInner.querySelectorAll(".quiz-choice").forEach(btn => {
-      btn.addEventListener("click", () => {
-        quizAnswers.push(btn.dataset.val);
-        quizStep++;
-        if (quizStep >= QUIZ.length) showQuizResult();
-        else renderQuizStep();
-      });
-    });
-  }
-
-  function showQuizResult() {
-    // Tally scores
-    const scores = new Array(STATIONS.length).fill(0);
-    quizAnswers.forEach(val => {
-      (QUIZ_SCORES[val] || []).forEach(idx => {
-        if (idx < STATIONS.length) scores[idx] += 1;
-      });
-    });
-    // Add small random tiebreak
-    scores.forEach((_, i) => scores[i] += Math.random() * 0.1);
-    const winner = scores.indexOf(Math.max(...scores));
-    const s = STATIONS[winner];
-    const desc = STATION_DESCS[winner] || s.tag;
-
-    const logoHtml = s.logo
-      ? `<img src="${escapeHtml(s.logo)}" alt="${escapeHtml(s.name)}" />`
-      : `<div style="width:100%;height:100%;background:var(--c${s.color});display:grid;place-items:center;font-size:28px;font-weight:800;color:#fff;">${initials(s.name)}</div>`;
-
-    quizInner.innerHTML = "";
-    const result = document.createElement("div");
-    result.className = "quiz-result";
-    result.innerHTML = `
-      <div class="quiz-result-logo">${logoHtml}</div>
-      <div class="quiz-result-intro">Ta webradio idéale, c'est…</div>
-      <div class="quiz-result-name">${escapeHtml(s.name)}</div>
-      <div class="quiz-result-desc">${escapeHtml(desc)}${s.wr ? ` <span style="opacity:.5;font-size:11px;">WR${s.wr}</span>` : ""}</div>
-      <div class="quiz-result-actions">
-        <button class="quiz-btn-play" id="quizPlay">▶ Écouter maintenant</button>
-        <button class="quiz-btn-retry" id="quizRetry">Recommencer</button>
-      </div>`;
-    quizInner.appendChild(result);
-
-    document.getElementById("quizPlay").addEventListener("click", () => {
-      closeQuiz();
-      selectStation(winner, true);
-    });
-    document.getElementById("quizRetry").addEventListener("click", () => {
-      quizAnswers = [];
-      quizStep = 0;
-      renderQuizStep();
-    });
-  }
-
-  const quizOverlay = document.getElementById("quizOverlay");
-  document.getElementById("quizBanner").addEventListener("click", openQuiz);
-  document.getElementById("quizBanner").addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") openQuiz(); });
-  document.getElementById("quizClose").addEventListener("click", closeQuiz);
-  quizOverlay.addEventListener("click", e => { if (e.target === quizOverlay) closeQuiz(); });
-
-  // ── Mood du jour ─────────────────────────────────────────────────────────────
-  const MOOD_SCHEDULE = [
-    { from:  5, to:  8, emoji: "🌅", label: "Réveil en douceur",      idx: 2  }, // Acoustic
-    { from:  8, to: 10, emoji: "☀️", label: "Bonne énergie du matin", idx: 3  }, // Hits
-    { from: 10, to: 12, emoji: "💻", label: "Concentration max",       idx: 25 }, // Work
-    { from: 12, to: 14, emoji: "🍽️", label: "Pause déj' feel good",   idx: 5  }, // Mix
-    { from: 14, to: 17, emoji: "⚡", label: "Coup de boost",           idx: 10 }, // Cardio
-    { from: 17, to: 19, emoji: "🚗", label: "Retour à la maison",      idx: 51 }, // RFM On the Road
-    { from: 19, to: 21, emoji: "🍷", label: "Soirée détente",          idx: 26 }, // Zen
-    { from: 21, to: 23, emoji: "🌙", label: "Nuit douce",              idx: 32 }, // RFM Lounge
-    { from: 23, to: 24, emoji: "🕺", label: "Nuit fever",              idx: 28 }, // RFM Night Fever
-    { from:  0, to:  5, emoji: "🌃", label: "Nuit profonde",           idx: 27 }, // RFM Collector
-  ];
-  function initMood() {
-    const h = new Date().getHours();
-    const mood = MOOD_SCHEDULE.find(m => h >= m.from && h < m.to) || MOOD_SCHEDULE[0];
-    const s = STATIONS[mood.idx];
-    if (!s) return;
-    document.getElementById("moodEmoji").textContent = mood.emoji;
-    document.getElementById("moodStation").textContent = `${mood.label} · ${s.name}`;
-    document.getElementById("moodPlay").addEventListener("click", () => selectStation(mood.idx, true));
-  }
-  initMood();
-
-  // ── Konami easter egg ─────────────────────────────────────────────────────────
-  const KONAMI = ["ArrowUp","ArrowUp","ArrowDown","ArrowDown","ArrowLeft","ArrowRight","ArrowLeft","ArrowRight","b","a"];
-  let konamiPos = 0;
-  document.addEventListener("keydown", e => {
-    if (e.key === KONAMI[konamiPos]) {
-      konamiPos++;
-      if (konamiPos === KONAMI.length) {
-        konamiPos = 0;
-        document.body.classList.add("konami-active");
-        const toast = document.createElement("div");
-        toast.className = "konami-toast";
-        toast.textContent = "🎮 KONAMI CODE ! +30 vies radio";
-        document.body.appendChild(toast);
-        setTimeout(() => { document.body.classList.remove("konami-active"); toast.remove(); }, 4000);
-      }
-    } else {
-      konamiPos = e.key === KONAMI[0] ? 1 : 0;
-    }
-  });
-
+  // Initial
   renderList();
+  requestAnimationFrame(moveIndicator);
+  window.addEventListener("resize", moveIndicator);
   if (typeof saved.stationIndex === "number" && STATIONS[saved.stationIndex]) {
-    // Pré-sélectionne sans démarrer (les navigateurs bloquent l'autoplay sans interaction)
     selectStation(saved.stationIndex, false);
   }
 </script>
