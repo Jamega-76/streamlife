@@ -443,6 +443,16 @@
     letter-spacing: -0.03em;
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 0 4px 12px rgba(0,0,0,0.12);
   }
+  .station-art img {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    border-radius: 11px;
+    display: block;
+  }
+  .station-art .initials-fallback {
+    position: relative; z-index: 1;
+  }
   .station-art::after {
     content: "";
     position: absolute; inset: 0;
@@ -619,6 +629,7 @@
         <span class="segmented-indicator" id="segInd"></span>
         <button class="is-active" data-filter="all">Tout</button>
         <button data-filter="Europe 2">Europe 2</button>
+        <button data-filter="RFM">RFM</button>
         <button data-filter="fav">★ Favoris</button>
       </div>
       <div class="search">
@@ -641,33 +652,64 @@
   const RFM = "https://resize-rfm.lanmedia.fr/r/100,100,forcex/crop/100,100,center-middle,forcex,ffffff/img/var/rfm/storage/images/programmes/les-webradios";
 
   const STATIONS = [
-    { name: "Europe 2 New",            tag: "Nouveautés",        group: "Europe 2", accent: "255, 107, 74",  url: "https://wr.lmn.fm/vr-wr1.mp3",  logo: `${E2}/webradio/WEBRADIO-NEW.jpg`,               metaUrl: "https://direct-radio.rfm.fr/playout?radio=2001" },
-    { name: "Europe 2 Classics",       tag: "Classiques",        group: "Europe 2", accent: "111, 125, 150", url: "https://wr.lmn.fm/vr-wr2.mp3",  logo: `${E2}/webradio/WEBRADIO-CLASSICS.jpg`,          metaUrl: "https://direct-radio.rfm.fr/playout?radio=2002" },
-    { name: "Europe 2 Acoustic",       tag: "Acoustique",        group: "Europe 2", accent: "255, 167, 81",  url: "https://wr.lmn.fm/vr-wr3.mp3",  logo: `${E2}/webradio/WEBRADIO-ACOUSTIC.jpg`,          metaUrl: "https://direct-radio.rfm.fr/playout?radio=2003" },
-    { name: "Europe 2 Hits",           tag: "Hits",              group: "Europe 2", accent: "255, 90, 120",  url: "https://wr.lmn.fm/vr-wr4.mp3",  logo: `${E2}/webradio/WEBRADIO-HITS.jpg`,              metaUrl: "https://direct-radio.rfm.fr/playout?radio=2004" },
-    { name: "Europe 2 Rock",           tag: "Rock",              group: "Europe 2", accent: "210, 60, 70",   url: "https://wr.lmn.fm/vr-wr5.mp3",  logo: `${E2}/webradio/WEBRADIO-ROCK.jpg`,              metaUrl: "https://direct-radio.rfm.fr/playout?radio=2005" },
-    { name: "Europe 2 Mix",            tag: "Mix",               group: "Europe 2", accent: "165, 107, 255", url: "https://wr.lmn.fm/vr-wr6.mp3",  logo: `${E2}/webradio/WEBRADIO-MIX.jpg`,               metaUrl: "https://direct-radio.rfm.fr/playout?radio=2006" },
-    { name: "Europe 2 Live",           tag: "Live",              group: "Europe 2", accent: "46, 204, 113",  url: "https://wr.lmn.fm/vr-wr7.mp3",  logo: `${E2}/webradio/WEBRADIO-LIVE.jpg`,              metaUrl: "https://direct-radio.rfm.fr/playout?radio=2007" },
-    { name: "Europe 2 Nouvelle Scène", tag: "Découvertes",       group: "Europe 2", accent: "23, 195, 178",  url: "https://wr.lmn.fm/vr-wr8.mp3",  logo: `${E2}/webradio/WEBRADIO-NOUVELLESCENE.jpg`,     metaUrl: "https://direct-radio.rfm.fr/playout?radio=2008" },
-    { name: "Europe 2 100% Français",  tag: "Chanson française", group: "Europe 2", accent: "94, 139, 255",  url: "https://wr.lmn.fm/vr-wr9.mp3",  logo: `${E2}/webradio/WEBRADIO-100FR.jpg`,             metaUrl: "https://direct-radio.rfm.fr/playout?radio=2009" },
-    { name: "Europe 2 Slow",           tag: "Slows",             group: "Europe 2", accent: "255, 140, 195", url: "https://wr.lmn.fm/vr-wr10.mp3", logo: `${E2}/webradio/WEBRADIO-SLOW.jpg`,              metaUrl: "https://direct-radio.rfm.fr/playout?radio=2010" },
-    { name: "Europe 2 Cardio",         tag: "Énergie",           group: "Europe 2", accent: "255, 80, 80",   url: "https://wr.lmn.fm/vr-wr11.mp3", logo: `${E2}/webradio/WEBRADIO-CARDIO.jpg`,            metaUrl: "https://direct-radio.rfm.fr/playout?radio=2011" },
-    { name: "Europe 2 90's",           tag: "Années 90",         group: "Europe 2", accent: "180, 100, 220", url: "https://wr.lmn.fm/vr-wr12.mp3", logo: `${E2}/webradio/WEBRADIO-90S.jpg`,               metaUrl: "https://direct-radio.rfm.fr/playout?radio=2012" },
-    { name: "Europe 2 Millenium",      tag: "Années 2000",       group: "Europe 2", accent: "100, 150, 255", url: "https://wr.lmn.fm/vr-wr13.mp3", logo: `${E2}/webradio/WEBRADIO-MILLENIUM.jpg`,         metaUrl: "https://direct-radio.rfm.fr/playout?radio=2013" },
-    { name: "Europe 2 Girl Power",     tag: "Pop · Female",      group: "Europe 2", accent: "255, 105, 180", url: "https://wr.lmn.fm/vr-wr14.mp3", logo: `${E2}/webradio/WEBRADIO-GIRLPOWER.jpg`,         metaUrl: "https://direct-radio.rfm.fr/playout?radio=2014" },
-    { name: "Europe 2 Pop Rock",       tag: "Pop Rock",          group: "Europe 2", accent: "240, 90, 110",  url: "https://wr.lmn.fm/vr-wr15.mp3", logo: `${E2}/webradio/WEBRADIO-POPROCK.jpg`,           metaUrl: "https://direct-radio.rfm.fr/playout?radio=2015" },
-    { name: "Europe 2 French Touch",   tag: "Électro française", group: "Europe 2", accent: "138, 80, 255",  url: "https://wr.lmn.fm/vr-wr16.mp3", logo: `${E2}/radio/FRENCHTOUCH-CARRE-250.jpg`,         metaUrl: "https://direct-radio.rfm.fr/playout?radio=2016" },
-    { name: "Europe 2 Love",           tag: "Romantique",        group: "Europe 2", accent: "255, 120, 150", url: "https://wr.lmn.fm/vr-wr17.mp3", logo: `${E2}/radio/love-carre.jpg`,                    metaUrl: "https://direct-radio.rfm.fr/playout?radio=2017" },
-    { name: "Europe 2 Pop 2010",       tag: "Pop 2010s",         group: "Europe 2", accent: "110, 160, 255", url: "https://wr.lmn.fm/vr-wr18.mp3", logo: `${E2}/radio/POP2010-CARRE-250.jpg`,             metaUrl: "https://direct-radio.rfm.fr/playout?radio=2018" },
-    { name: "Europe 2 Dance",          tag: "Dance · Club",      group: "Europe 2", accent: "120, 90, 240",  url: "https://wr.lmn.fm/vr-wr19.mp3", logo: `${E2}/radio/DANCE-250.jpg`,                     metaUrl: "https://direct-radio.rfm.fr/playout?radio=2019" },
-    { name: "Europe 2 Ciné",           tag: "B.O. de films",     group: "Europe 2", accent: "80, 100, 130",  url: "https://wr.lmn.fm/vr-wr20.mp3", logo: `${E2}/radio/CINE-250.jpg`,                      metaUrl: "https://direct-radio.rfm.fr/playout?radio=2020" },
-    { name: "Europe 2 Pop 2020",       tag: "Pop actuelle",      group: "Europe 2", accent: "90, 180, 255",  url: "https://wr.lmn.fm/vr-wr21.mp3", logo: `${E2}/radio/POP2020-CARRE-250.jpg`,             metaUrl: "https://direct-radio.rfm.fr/playout?radio=2021" },
-    { name: "Europe 2 Running",        tag: "Tempo",             group: "Europe 2", accent: "255, 180, 70",  url: "https://wr.lmn.fm/vr-wr22.mp3", logo: `${E2}/radio/RUNNING-CARRE-250.jpg`,             metaUrl: "https://direct-radio.rfm.fr/playout?radio=2022" },
-    { name: "Europe 2 Duos",           tag: "Duos",              group: "Europe 2", accent: "255, 150, 190", url: "https://wr.lmn.fm/vr-wr23.mp3", logo: `${E2}/radio/DUOS-CARRE-250.jpg`,                metaUrl: "https://direct-radio.rfm.fr/playout?radio=2023" },
-    { name: "Europe 2 Soul / R'n'B",   tag: "Soul · R'n'B",      group: "Europe 2", accent: "150, 90, 200",  url: "https://wr.lmn.fm/vr-wr24.mp3", logo: `${E2}/radio/SOULRNB-250X250.jpg`,               metaUrl: "https://direct-radio.rfm.fr/playout?radio=2024" },
-    { name: "Europe 2 Home",           tag: "À la maison",       group: "Europe 2", accent: "255, 140, 100", url: "https://wr.lmn.fm/vr-wr25.mp3", logo: `${E2}/radio/HOME-250X250.jpg`,                  metaUrl: "https://direct-radio.rfm.fr/playout?radio=2025" },
-    { name: "Work",                    tag: "Concentration",     group: "Europe 2", accent: "90, 100, 115",  url: "https://wr.lmn.fm/vr-wr26.mp3", logo: `${E2}/radio/WORK-250X250.jpg`,                  metaUrl: "https://direct-radio.rfm.fr/playout?radio=2026" },
-    { name: "Europe 2 Zen",            tag: "Détente",           group: "Europe 2", accent: "120, 200, 190", url: "https://wr.lmn.fm/vr-wr27.mp3", logo: `${E2}/radio/ZEN-CARRE-250.jpg`,                 metaUrl: "https://direct-radio.rfm.fr/playout?radio=2027" },
+    { name: "Europe 2 New",            tag: "Nouveautés",        group: "Europe 2", accent: "255, 107, 74",  url: "https://wr.lmn.fm/vr-wr1.mp3",  logo: `${E2}/webradio/WEBRADIO-NEW.jpg`,               metaUrl: "https://direct-radio.rfm.fr/playout?radio=2001", wr:  1 },
+    { name: "Europe 2 Classics",       tag: "Classiques",        group: "Europe 2", accent: "111, 125, 150", url: "https://wr.lmn.fm/vr-wr2.mp3",  logo: `${E2}/webradio/WEBRADIO-CLASSICS.jpg`,          metaUrl: "https://direct-radio.rfm.fr/playout?radio=2002", wr:  2 },
+    { name: "Europe 2 Acoustic",       tag: "Acoustique",        group: "Europe 2", accent: "255, 167, 81",  url: "https://wr.lmn.fm/vr-wr3.mp3",  logo: `${E2}/webradio/WEBRADIO-ACOUSTIC.jpg`,          metaUrl: "https://direct-radio.rfm.fr/playout?radio=2003", wr:  3 },
+    { name: "Europe 2 Hits",           tag: "Hits",              group: "Europe 2", accent: "255, 90, 120",  url: "https://wr.lmn.fm/vr-wr4.mp3",  logo: `${E2}/webradio/WEBRADIO-HITS.jpg`,              metaUrl: "https://direct-radio.rfm.fr/playout?radio=2004", wr:  4 },
+    { name: "Europe 2 Rock",           tag: "Rock",              group: "Europe 2", accent: "210, 60, 70",   url: "https://wr.lmn.fm/vr-wr5.mp3",  logo: `${E2}/webradio/WEBRADIO-ROCK.jpg`,              metaUrl: "https://direct-radio.rfm.fr/playout?radio=2005", wr:  5 },
+    { name: "Europe 2 Mix",            tag: "Mix",               group: "Europe 2", accent: "165, 107, 255", url: "https://wr.lmn.fm/vr-wr6.mp3",  logo: `${E2}/webradio/WEBRADIO-MIX.jpg`,               metaUrl: "https://direct-radio.rfm.fr/playout?radio=2006", wr:  6 },
+    { name: "Europe 2 Live",           tag: "Live",              group: "Europe 2", accent: "46, 204, 113",  url: "https://wr.lmn.fm/vr-wr7.mp3",  logo: `${E2}/webradio/WEBRADIO-LIVE.jpg`,              metaUrl: "https://direct-radio.rfm.fr/playout?radio=2007", wr:  7 },
+    { name: "Europe 2 Nouvelle Scène", tag: "Découvertes",       group: "Europe 2", accent: "23, 195, 178",  url: "https://wr.lmn.fm/vr-wr8.mp3",  logo: `${E2}/webradio/WEBRADIO-NOUVELLESCENE.jpg`,     metaUrl: "https://direct-radio.rfm.fr/playout?radio=2008", wr:  8 },
+    { name: "Europe 2 100% Français",  tag: "Chanson française", group: "Europe 2", accent: "94, 139, 255",  url: "https://wr.lmn.fm/vr-wr9.mp3",  logo: `${E2}/webradio/WEBRADIO-100FR.jpg`,             metaUrl: "https://direct-radio.rfm.fr/playout?radio=2009", wr:  9 },
+    { name: "Europe 2 Slow",           tag: "Slows",             group: "Europe 2", accent: "255, 140, 195", url: "https://wr.lmn.fm/vr-wr10.mp3", logo: `${E2}/webradio/WEBRADIO-SLOW.jpg`,              metaUrl: "https://direct-radio.rfm.fr/playout?radio=2010", wr: 10 },
+    { name: "Europe 2 Cardio",         tag: "Énergie",           group: "Europe 2", accent: "255, 80, 80",   url: "https://wr.lmn.fm/vr-wr11.mp3", logo: `${E2}/webradio/WEBRADIO-CARDIO.jpg`,            metaUrl: "https://direct-radio.rfm.fr/playout?radio=2011", wr: 11 },
+    { name: "Europe 2 90's",           tag: "Années 90",         group: "Europe 2", accent: "180, 100, 220", url: "https://wr.lmn.fm/vr-wr12.mp3", logo: `${E2}/webradio/WEBRADIO-90S.jpg`,               metaUrl: "https://direct-radio.rfm.fr/playout?radio=2012", wr: 12 },
+    { name: "Europe 2 Millenium",      tag: "Années 2000",       group: "Europe 2", accent: "100, 150, 255", url: "https://wr.lmn.fm/vr-wr13.mp3", logo: `${E2}/webradio/WEBRADIO-MILLENIUM.jpg`,         metaUrl: "https://direct-radio.rfm.fr/playout?radio=2013", wr: 13 },
+    { name: "Europe 2 Girl Power",     tag: "Pop · Female",      group: "Europe 2", accent: "255, 105, 180", url: "https://wr.lmn.fm/vr-wr14.mp3", logo: `${E2}/webradio/WEBRADIO-GIRLPOWER.jpg`,         metaUrl: "https://direct-radio.rfm.fr/playout?radio=2014", wr: 14 },
+    { name: "Europe 2 Pop Rock",       tag: "Pop Rock",          group: "Europe 2", accent: "240, 90, 110",  url: "https://wr.lmn.fm/vr-wr15.mp3", logo: `${E2}/webradio/WEBRADIO-POPROCK.jpg`,           metaUrl: "https://direct-radio.rfm.fr/playout?radio=2015", wr: 15 },
+    { name: "Europe 2 French Touch",   tag: "Électro française", group: "Europe 2", accent: "138, 80, 255",  url: "https://wr.lmn.fm/vr-wr16.mp3", logo: `${E2}/radio/FRENCHTOUCH-CARRE-250.jpg`,         metaUrl: "https://direct-radio.rfm.fr/playout?radio=2016", wr: 16 },
+    { name: "Europe 2 Love",           tag: "Romantique",        group: "Europe 2", accent: "255, 120, 150", url: "https://wr.lmn.fm/vr-wr17.mp3", logo: `${E2}/radio/love-carre.jpg`,                    metaUrl: "https://direct-radio.rfm.fr/playout?radio=2017", wr: 17 },
+    { name: "Europe 2 Pop 2010",       tag: "Pop 2010s",         group: "Europe 2", accent: "110, 160, 255", url: "https://wr.lmn.fm/vr-wr18.mp3", logo: `${E2}/radio/POP2010-CARRE-250.jpg`,             metaUrl: "https://direct-radio.rfm.fr/playout?radio=2018", wr: 18 },
+    { name: "Europe 2 Dance",          tag: "Dance · Club",      group: "Europe 2", accent: "120, 90, 240",  url: "https://wr.lmn.fm/vr-wr19.mp3", logo: `${E2}/radio/DANCE-250.jpg`,                     metaUrl: "https://direct-radio.rfm.fr/playout?radio=2019", wr: 19 },
+    { name: "Europe 2 Ciné",           tag: "B.O. de films",     group: "Europe 2", accent: "80, 100, 130",  url: "https://wr.lmn.fm/vr-wr20.mp3", logo: `${E2}/radio/CINE-250.jpg`,                      metaUrl: "https://direct-radio.rfm.fr/playout?radio=2020", wr: 20 },
+    { name: "Europe 2 Pop 2020",       tag: "Pop actuelle",      group: "Europe 2", accent: "90, 180, 255",  url: "https://wr.lmn.fm/vr-wr21.mp3", logo: `${E2}/radio/POP2020-CARRE-250.jpg`,             metaUrl: "https://direct-radio.rfm.fr/playout?radio=2021", wr: 21 },
+    { name: "Europe 2 Running",        tag: "Tempo",             group: "Europe 2", accent: "255, 180, 70",  url: "https://wr.lmn.fm/vr-wr22.mp3", logo: `${E2}/radio/RUNNING-CARRE-250.jpg`,             metaUrl: "https://direct-radio.rfm.fr/playout?radio=2022", wr: 22 },
+    { name: "Europe 2 Duos",           tag: "Duos",              group: "Europe 2", accent: "255, 150, 190", url: "https://wr.lmn.fm/vr-wr23.mp3", logo: `${E2}/radio/DUOS-CARRE-250.jpg`,                metaUrl: "https://direct-radio.rfm.fr/playout?radio=2023", wr: 23 },
+    { name: "Europe 2 Soul / R'n'B",   tag: "Soul · R'n'B",      group: "Europe 2", accent: "150, 90, 200",  url: "https://wr.lmn.fm/vr-wr24.mp3", logo: `${E2}/radio/SOULRNB-250X250.jpg`,               metaUrl: "https://direct-radio.rfm.fr/playout?radio=2024", wr: 24 },
+    { name: "Europe 2 Home",           tag: "À la maison",       group: "Europe 2", accent: "255, 140, 100", url: "https://wr.lmn.fm/vr-wr25.mp3", logo: `${E2}/radio/HOME-250X250.jpg`,                  metaUrl: "https://direct-radio.rfm.fr/playout?radio=2025", wr: 25 },
+    { name: "Work",                    tag: "Concentration",     group: "Europe 2", accent: "90, 100, 115",  url: "https://wr.lmn.fm/vr-wr26.mp3", logo: `${E2}/radio/WORK-250X250.jpg`,                  metaUrl: "https://direct-radio.rfm.fr/playout?radio=2026", wr: 26 },
+    { name: "Europe 2 Zen",            tag: "Détente",           group: "Europe 2", accent: "120, 200, 190", url: "https://wr.lmn.fm/vr-wr27.mp3", logo: `${E2}/radio/ZEN-CARRE-250.jpg`,                 metaUrl: "https://direct-radio.rfm.fr/playout?radio=2027", wr: 27 },
+    // ── RFM ──────────────────────────────────────────────────────────────────────
+    { name: "RFM Collector",           tag: "Collector",         group: "RFM",      accent: "46, 180, 130",  url: "https://rfm.lmn.fm/rfm-wr1.mp3",  logo: `${RFM}/rfm-collector/3275-3-fre-FR/RFM-Collector.png`,                          metaUrl: "https://direct-radio.rfm.fr/playout?radio=3001", wr:  1 },
+    { name: "RFM Night Fever",         tag: "Disco · Funk",      group: "RFM",      accent: "200, 80, 200",  url: "https://rfm.lmn.fm/rfm-wr2.mp3",  logo: `${RFM}/rfm-night-fever/3090-6-fre-FR/RFM-Night-Fever.png`,                     metaUrl: "https://direct-radio.rfm.fr/playout?radio=3002", wr:  2 },
+    { name: "RFM La Radio Couleur",    tag: "Généraliste",       group: "RFM",      accent: "46, 180, 130",  url: "https://rfm.lmn.fm/rfm-wr3.mp3",  logo: `${RFM}/la-radio-couleur/19322-9-fre-FR/La-Radio-Couleur.png`,                   metaUrl: "https://direct-radio.rfm.fr/playout?radio=3003", wr:  3 },
+    { name: "RFM 80'",                 tag: "Années 80",         group: "RFM",      accent: "220, 120, 50",  url: "https://rfm.lmn.fm/rfm-wr4.mp3",  logo: `${RFM}/rfm-80-s/3281-3-fre-FR/RFM-80-s.png`,                                   metaUrl: "https://direct-radio.rfm.fr/playout?radio=3004", wr:  4 },
+    { name: "RFM Party 90",            tag: "Années 90",         group: "RFM",      accent: "160, 80, 220",  url: "https://rfm.lmn.fm/rfm-wr5.mp3",  logo: `${RFM}/rfm-party-90/7598-13-fre-FR/RFM-Party-90.jpg`,                          metaUrl: "https://direct-radio.rfm.fr/playout?radio=3005", wr:  5 },
+    { name: "RFM Lounge",              tag: "Lounge",            group: "RFM",      accent: "80, 120, 160",  url: "https://rfm.lmn.fm/rfm-wr6.mp3",  logo: `${RFM}/rfm-lounge/19264-14-fre-FR/RFM-Lounge.png`,                              metaUrl: "https://direct-radio.rfm.fr/playout?radio=3006", wr:  6 },
+    { name: "RFM Top 50",              tag: "Le Hit",            group: "RFM",      accent: "255, 80, 80",   url: "https://rfm.lmn.fm/rfm-wr7.mp3",  logo: `${RFM}/le-top-50-rfm/3287-21-fre-FR/Le-Top-50-RFM.png`,                        metaUrl: "https://direct-radio.rfm.fr/playout?radio=3007", wr:  7 },
+    { name: "RFM Hit Party",           tag: "Hits · Fête",       group: "RFM",      accent: "255, 140, 50",  url: "https://rfm.lmn.fm/rfm-wr8.mp3",  logo: `${RFM}/rfm-summer-party/171024-30-fre-FR/RFM-Summer-Party.jpg`,                metaUrl: "https://direct-radio.rfm.fr/playout?radio=3008", wr:  8 },
+    { name: "RFM Love",                tag: "Romantique",        group: "RFM",      accent: "255, 100, 150", url: "https://rfm.lmn.fm/rfm-wr9.mp3",  logo: `${RFM}/rfm-love-songs/19356-14-fre-FR/RFM-Love-Songs.jpg`,                     metaUrl: "https://direct-radio.rfm.fr/playout?radio=3009", wr:  9 },
+    { name: "RFM Pop Rock",            tag: "Pop Rock",          group: "RFM",      accent: "220, 80, 100",  url: "https://rfm.lmn.fm/rfm-wr10.mp3", logo: `${RFM}/rfm-pop-rock/19370-1-fre-FR/RFM-Pop-Rock.png`,                          metaUrl: "https://direct-radio.rfm.fr/playout?radio=3010", wr: 10 },
+    { name: "RFM 100% Français",       tag: "Chanson française", group: "RFM",      accent: "60, 120, 220",  url: "https://rfm.lmn.fm/rfm-wr11.mp3", logo: `${RFM}/100-francais/50811-7-fre-FR/100-Francais.png`,                          metaUrl: "https://direct-radio.rfm.fr/playout?radio=3011", wr: 11 },
+    { name: "RFM New Wave",            tag: "New Wave",          group: "RFM",      accent: "23, 180, 170",  url: "https://rfm.lmn.fm/rfm-wr12.mp3", logo: `${RFM}/100-new-wave/30917-9-fre-FR/100-New-Wave.png`,                          metaUrl: "https://direct-radio.rfm.fr/playout?radio=3012", wr: 12 },
+    { name: "RFM Slow",                tag: "Slows",             group: "RFM",      accent: "255, 130, 180", url: "https://rfm.lmn.fm/rfm-wr13.mp3", logo: `${RFM}/rfm-slow/54053-1-fre-FR/RFM-Slow.png`,                                  metaUrl: "https://direct-radio.rfm.fr/playout?radio=3013", wr: 13 },
+    { name: "RFM 80-90",               tag: "Années 80-90",      group: "RFM",      accent: "200, 120, 60",  url: "https://rfm.lmn.fm/rfm-wr14.mp3", logo: `${RFM}/rfm-party-80-90/54039-33-fre-FR/RFM-Party-80-90.png`,                  metaUrl: "https://direct-radio.rfm.fr/playout?radio=3014", wr: 14 },
+    { name: "RFM Chagrins d'Amour",    tag: "Nostalgie",         group: "RFM",      accent: "180, 80, 120",  url: "https://rfm.lmn.fm/rfm-wr15.mp3", logo: `${RFM}/rfm-chagrins-d-amour/54025-18-fre-FR/RFM-chagrins-d-amour.jpg`,        metaUrl: "https://direct-radio.rfm.fr/playout?radio=3015", wr: 15 },
+    { name: "RFM 70's",                tag: "Années 70",         group: "RFM",      accent: "200, 160, 60",  url: "https://rfm.lmn.fm/rfm-wr16.mp3", logo: `${RFM}/rfm-70-s/67769-15-fre-FR/RFM-70-s.png`,                                metaUrl: "https://direct-radio.rfm.fr/playout?radio=3016", wr: 16 },
+    { name: "RFM California",          tag: "West Coast",        group: "RFM",      accent: "80, 180, 220",  url: "https://rfm.lmn.fm/rfm-wr17.mp3", logo: `${RFM}/rfm-california/467194-1-fre-FR/RFM-California.jpg`,                    metaUrl: "https://direct-radio.rfm.fr/playout?radio=3017", wr: 17 },
+    { name: "RFM Party Mix",           tag: "Yann Muller",       group: "RFM",      accent: "150, 80, 220",  url: "https://rfm.lmn.fm/rfm-wr18.mp3", logo: `${RFM}/party-mix-avec-yann-muller/467201-4-fre-FR/Party-Mix-avec-Yann-Muller.jpg`, metaUrl: "https://direct-radio.rfm.fr/playout?radio=3018", wr: 18 },
+    { name: "RFM Cinéma",              tag: "B.O. de films",     group: "RFM",      accent: "80, 100, 140",  url: "https://rfm.lmn.fm/rfm-wr19.mp3", logo: `${RFM}/rfm-cinema/467909-1-fre-FR/RFM-Cinema.jpg`,                            metaUrl: "https://direct-radio.rfm.fr/playout?radio=3019", wr: 19 },
+    { name: "RFM Hit 2000",            tag: "Années 2000",       group: "RFM",      accent: "80, 140, 255",  url: "https://rfm.lmn.fm/rfm-wr20.mp3", logo: `${RFM}/rfm-hits-2000/469859-1-fre-FR/RFM-Hits-2000.jpg`,                      metaUrl: "https://direct-radio.rfm.fr/playout?radio=3020", wr: 20 },
+    { name: "RFM Hit 2010",            tag: "Années 2010",       group: "RFM",      accent: "100, 160, 255", url: "https://rfm.lmn.fm/rfm-wr21.mp3", logo: `${RFM}/rfm-hits-2010/469852-1-fre-FR/RFM-Hits-2010.jpg`,                      metaUrl: "https://direct-radio.rfm.fr/playout?radio=3021", wr: 21 },
+    { name: "RFM Live",                tag: "Live",              group: "RFM",      accent: "46, 200, 120",  url: "https://rfm.lmn.fm/rfm-wr22.mp3", logo: `${RFM}/rfm-live/469809-1-fre-FR/RFM-Live.jpg`,                                metaUrl: "https://direct-radio.rfm.fr/playout?radio=3022", wr: 22 },
+    { name: "RFM Nouvelle Production", tag: "Nouveautés",        group: "RFM",      accent: "80, 200, 180",  url: "https://rfm.lmn.fm/rfm-wr23.mp3", logo: `${RFM}/rfm-talent-a-suivre/469845-1-fre-FR/RFM-Talent-a-Suivre.jpg`,          metaUrl: "https://direct-radio.rfm.fr/playout?radio=3023", wr: 23 },
+    { name: "RFM Italie",              tag: "Chansons italiennes",group: "RFM",     accent: "200, 80, 60",   url: "https://rfm.lmn.fm/rfm-wr24.mp3", logo: `${RFM}/rfm-italie/469866-1-fre-FR/RFM-Italie.jpg`,                            metaUrl: "https://direct-radio.rfm.fr/playout?radio=3024", wr: 24 },
+    { name: "RFM Christmas",           tag: "Noël",              group: "RFM",      accent: "200, 60, 60",   url: "https://rfm.lmn.fm/rfm-wr25.mp3", logo: `${RFM}/rfm-christmas/467289-1-fre-FR/RFM-Christmas.png`,                      metaUrl: "https://direct-radio.rfm.fr/playout?radio=3025", wr: 25 },
+    { name: "RFM On the Road",         tag: "Route · Voyage",    group: "RFM",      accent: "80, 160, 120",  url: "https://rfm.lmn.fm/rfm-wr26.mp3", logo: `${RFM}/rfm-on-the-road/469802-1-fre-FR/RFM-On-The-Road.jpg`,                  metaUrl: "https://direct-radio.rfm.fr/playout?radio=3026", wr: 26 },
+    { name: "RFM Funk",                tag: "Funk",              group: "RFM",      accent: "180, 100, 40",  url: "https://rfm.lmn.fm/rfm-wr27.mp3", logo: `${RFM}/rfm-funk/469895-1-fre-FR/RFM-Funk.jpg`,                                metaUrl: "https://direct-radio.rfm.fr/playout?radio=3027", wr: 27 },
+    { name: "RFM Run & Fit",           tag: "Sport · Énergie",   group: "RFM",      accent: "255, 80, 60",   url: "https://rfm.lmn.fm/rfm-wr28.mp3", logo: `${RFM}/rfm-run-and-fit/492963-1-fre-FR/RFM-Run-and-Fit.jpg`,                  metaUrl: "https://direct-radio.rfm.fr/playout?radio=3028", wr: 28 },
+    { name: "RFM Disco",               tag: "Disco",             group: "RFM",      accent: "180, 60, 180",  url: "https://rfm.lmn.fm/rfm-wr29.mp3", logo: `${RFM}/rfm-disco/469888-1-fre-FR/RFM-Disco.jpg`,                              metaUrl: "https://direct-radio.rfm.fr/playout?radio=3029", wr: 29 },
+    { name: "RFM Party 80",            tag: "Fête · Années 80",  group: "RFM",      accent: "220, 100, 40",  url: "https://rfm.lmn.fm/rfm-wr30.mp3", logo: `${RFM}/rfm-party-80/499872-3-fre-FR/RFM-Party-80.png`,                        metaUrl: "https://direct-radio.rfm.fr/playout?radio=3030", wr: 30 },
   ];
 
   const audio     = document.getElementById("audio");
@@ -758,12 +800,15 @@
     }
     list.innerHTML = items.map(({s, i}) => {
       const gradient = `linear-gradient(135deg, rgb(${s.accent}), rgba(${s.accent}, 0.5))`;
+      const logoHtml = s.logo
+        ? `<img src="${escapeHtml(s.logo)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block'" /><span class="initials-fallback" style="display:none">${initials(s.name)}</span>`
+        : `<span class="initials-fallback">${initials(s.name)}</span>`;
       return `
       <button class="station ${current === i ? "is-active" : ""} ${favs.has(i) ? "is-fav" : ""}" data-i="${i}" role="option">
-        <div class="station-art" style="background:${gradient}">${initials(s.name)}</div>
+        <div class="station-art" style="background:${gradient}">${logoHtml}</div>
         <div class="playing-chip" aria-hidden="true"><i></i><i></i><i></i></div>
         <div class="station-name">${escapeHtml(s.name)}</div>
-        <div class="station-tag">${escapeHtml(s.tag)}</div>
+        <div class="station-tag">${escapeHtml(s.tag)}${s.wr ? ` · WR${s.wr}` : ""}</div>
         <button class="fav" data-fav="${i}" aria-label="Favori" tabindex="-1">
           <svg viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 2l2.9 6.9L22 10l-5.5 4.8L18.2 22 12 18.3 5.8 22l1.7-7.2L2 10l7.1-1.1z"/>
