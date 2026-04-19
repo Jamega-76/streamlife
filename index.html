@@ -555,6 +555,167 @@
     z-index: 100;
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── History panel ───────────────────────────── */
+  .history-panel {
+    border-top: 1px solid var(--stroke);
+    padding-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .history-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--fg-faint);
+    padding: 0 2px;
+  }
+  .history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .history-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px;
+    border-radius: 10px;
+    transition: background .15s;
+  }
+  .history-item:hover { background: var(--surface); }
+  .history-thumb {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+  .history-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .history-thumb-placeholder {
+    width: 100%; height: 100%;
+    display: grid; place-items: center;
+    font-size: 14px; color: var(--fg-faint);
+  }
+  .history-body { flex: 1; min-width: 0; }
+  .history-track {
+    font-size: 12px; font-weight: 600;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    letter-spacing: -0.01em;
+  }
+  .history-artist {
+    font-size: 11px; color: var(--fg-dim);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .history-time { font-size: 10px; color: var(--fg-faint); flex-shrink: 0; }
+
+  /* ── Mobile responsive ───────────────────────── */
+  @media (max-width: 700px) {
+    body { overflow: hidden; }
+
+    .app {
+      grid-template-columns: 1fr;
+      grid-template-rows: 1fr auto;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* Left panel = player fullscreen */
+    .now {
+      padding: 28px 24px 12px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 80px; /* space for mini-player */
+    }
+
+    /* Library = slide-up sheet */
+    .library {
+      position: fixed;
+      inset: 0;
+      top: auto;
+      height: 80vh;
+      padding: 0 20px 24px;
+      background: var(--bg-1);
+      backdrop-filter: blur(40px);
+      border-top: 1px solid var(--stroke);
+      border-radius: 22px 22px 0 0;
+      box-shadow: 0 -8px 40px rgba(0,0,0,0.18);
+      z-index: 50;
+      transform: translateY(100%);
+      transition: transform .4s cubic-bezier(.3,.8,.3,1);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .library.is-open { transform: translateY(0); }
+    .library::before {
+      content: "";
+      display: block;
+      width: 36px; height: 4px;
+      border-radius: 2px;
+      background: var(--fg-faint);
+      margin: 14px auto 0;
+      flex-shrink: 0;
+    }
+
+    /* Mini-player bar sticky at bottom */
+    .mini-player {
+      display: flex !important;
+    }
+
+    /* History panel hidden on mobile (in sheet) */
+    .history-panel { display: none; }
+  }
+
+  /* Mini-player — hidden on desktop */
+  .mini-player {
+    display: none;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 40;
+    padding: 10px 16px 20px;
+    background: rgba(var(--accent-rgb), 0.12);
+    backdrop-filter: blur(32px);
+    -webkit-backdrop-filter: blur(32px);
+    border-top: 1px solid rgba(var(--accent-rgb), 0.2);
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+  }
+  .mini-art {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: var(--surface);
+  }
+  .mini-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .mini-meta { flex: 1; min-width: 0; }
+  .mini-station { font-size: 10px; color: rgb(var(--accent-rgb)); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+  .mini-title { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.01em; }
+  .mini-play {
+    width: 36px; height: 36px; border-radius: 50%;
+    border: 0; background: var(--fg); color: var(--bg-1);
+    display: grid; place-items: center;
+    cursor: pointer; flex-shrink: 0;
+    transition: transform .15s;
+  }
+  .mini-play:hover { transform: scale(1.08); }
+  .mini-play svg { width: 16px; height: 16px; }
+  .mini-play .ico-pause, .app.is-playing .mini-play .ico-play { display: none; }
+  .app.is-playing .mini-play .ico-pause { display: block; }
+  .mini-list-btn {
+    width: 36px; height: 36px; border-radius: 50%;
+    border: 1px solid var(--stroke); background: var(--surface);
+    display: grid; place-items: center;
+    cursor: pointer; flex-shrink: 0;
+    color: var(--fg-dim);
+    transition: background .15s;
+  }
+  .mini-list-btn:hover { background: var(--surface-2); }
+  .mini-list-btn svg { width: 16px; height: 16px; }
 </style>
 </head>
 <body>
@@ -620,7 +781,32 @@
         <path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/>
       </svg>
     </div>
+
+    <!-- History -->
+    <div class="history-panel" id="historyPanel" style="display:none">
+      <div class="history-title">Titres récents</div>
+      <div class="history-list" id="historyList"></div>
+    </div>
+
   </aside>
+
+  <!-- Mini-player (mobile) -->
+  <div class="mini-player" id="miniPlayer">
+    <div class="mini-art" id="miniArt">
+      <img id="miniArtImg" src="" alt="" style="display:none" />
+    </div>
+    <div class="mini-meta">
+      <div class="mini-station" id="miniStation">—</div>
+      <div class="mini-title" id="miniTitle">Choisissez une station</div>
+    </div>
+    <button class="mini-play" id="miniPlayBtn" aria-label="Lecture/Pause">
+      <svg class="ico-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.54.84l10.2-6.5a1 1 0 0 0 0-1.68L9.54 4.66A1 1 0 0 0 8 5.5z"/></svg>
+      <svg class="ico-pause" viewBox="0 0 24 24" fill="currentColor"><rect x="6.5" y="5" width="4" height="14" rx="1.2"/><rect x="13.5" y="5" width="4" height="14" rx="1.2"/></svg>
+    </button>
+    <button class="mini-list-btn" id="miniListBtn" aria-label="Voir les stations">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+    </button>
+  </div>
 
   <!-- RIGHT : Library -->
   <section class="library">
@@ -740,7 +926,30 @@
   let audioCtx, analyser, dataArray, source;
   let metaTimer = null;
   let lastTrackId = null;
+  let retryTimer = null;
+  let retryCount = 0;
+  let trackHistory = [];
+  let accentFrom = [255, 107, 74];
+  let accentTo   = [255, 107, 74];
+  let accentAnim = null;
   const BARS = 28;
+
+  const historyPanel  = document.getElementById("historyPanel");
+  const historyList   = document.getElementById("historyList");
+  const miniPlayer    = document.getElementById("miniPlayer");
+  const miniStation   = document.getElementById("miniStation");
+  const miniTitle     = document.getElementById("miniTitle");
+  const miniArtImg    = document.getElementById("miniArtImg");
+  const miniPlayBtn   = document.getElementById("miniPlayBtn");
+  const miniListBtn   = document.getElementById("miniListBtn");
+  const library       = document.querySelector(".library");
+
+  miniPlayBtn.addEventListener("click", togglePlay);
+  miniListBtn.addEventListener("click", () => library.classList.toggle("is-open"));
+  // Close library when clicking backdrop on mobile
+  library.addEventListener("click", e => {
+    if (e.target === library) library.classList.remove("is-open");
+  });
 
   // Build waveform bars
   wave.innerHTML = Array.from({length: BARS}, () => "<span></span>").join("");
@@ -818,8 +1027,25 @@
     }).join("");
   }
 
-  function setAccent(rgb) {
-    document.documentElement.style.setProperty("--accent-rgb", rgb);
+  // ── Smooth accent interpolation ──────────────────────────────────────────────
+  function parseRgb(str) { return str.split(",").map(Number); }
+
+  function setAccent(rgbStr) {
+    accentFrom = parseRgb(getComputedStyle(document.documentElement).getPropertyValue("--accent-rgb").trim() || "255,107,74");
+    accentTo   = parseRgb(rgbStr);
+    const start = performance.now();
+    const dur   = 700;
+    if (accentAnim) cancelAnimationFrame(accentAnim);
+    function step(now) {
+      const t = Math.min((now - start) / dur, 1);
+      const ease = t < 0.5 ? 2*t*t : -1+(4-2*t)*t; // easeInOut
+      const r = Math.round(accentFrom[0] + (accentTo[0] - accentFrom[0]) * ease);
+      const g = Math.round(accentFrom[1] + (accentTo[1] - accentFrom[1]) * ease);
+      const b = Math.round(accentFrom[2] + (accentTo[2] - accentFrom[2]) * ease);
+      document.documentElement.style.setProperty("--accent-rgb", `${r}, ${g}, ${b}`);
+      if (t < 1) accentAnim = requestAnimationFrame(step);
+    }
+    accentAnim = requestAnimationFrame(step);
   }
 
   function showToast(msg) {
@@ -863,21 +1089,61 @@
       lastTrackId = np.id;
       nowTitle.textContent  = np.title  || s.tag;
       nowArtist.textContent = np.artist || "";
+      miniTitle.textContent = np.title  || s.tag;
       showCover(np.imageUrl || "");
+
+      // Update mini-player art
+      if (np.imageUrl) { miniArtImg.src = np.imageUrl; miniArtImg.style.display = "block"; }
+      else { miniArtImg.style.display = "none"; }
+
+      // Build history (playing + history entries)
+      if (np.title) {
+        const entry = { id: np.id, title: np.title, artist: np.artist || "", imageUrl: np.imageUrl || "", time: new Date() };
+        trackHistory = [entry, ...trackHistory.filter(t => t.id !== np.id)];
+        // Also add API history items
+        all.filter(t => t.status === "history" && t.title && !trackHistory.find(h => h.id === t.id))
+           .forEach(t => trackHistory.push({ id: t.id, title: t.title, artist: t.artist || "", imageUrl: t.imageUrl || "", time: new Date(t.time || 0) }));
+        trackHistory = trackHistory.slice(0, 8);
+        renderHistory();
+      }
     } catch { /* silent */ }
+  }
+
+  function renderHistory() {
+    if (trackHistory.length === 0) { historyPanel.style.display = "none"; return; }
+    historyPanel.style.display = "";
+    historyList.innerHTML = trackHistory.map((t, idx) => {
+      const time = idx === 0 ? "🎵" : t.time.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+      return `<div class="history-item">
+        <div class="history-thumb">
+          ${t.imageUrl
+            ? `<img src="${escapeHtml(t.imageUrl)}" alt="" onerror="this.parentElement.innerHTML='<div class=history-thumb-placeholder>♪</div>'" />`
+            : `<div class="history-thumb-placeholder">♪</div>`}
+        </div>
+        <div class="history-body">
+          <div class="history-track">${escapeHtml(t.title)}</div>
+          <div class="history-artist">${escapeHtml(t.artist)}</div>
+        </div>
+        <div class="history-time">${time}</div>
+      </div>`;
+    }).join("");
   }
 
   function startMetaPolling() {
     stopMetaPolling();
     fetchMeta();
-    metaTimer = setInterval(fetchMeta, 30000);
+    metaTimer = setInterval(fetchMeta, 15000);
   }
 
   function stopMetaPolling() {
     if (metaTimer) { clearInterval(metaTimer); metaTimer = null; }
     lastTrackId = null;
+    trackHistory = [];
     artCover.classList.remove("visible");
     nowArtist.textContent = "";
+    miniArtImg.style.display = "none";
+    historyPanel.style.display = "none";
+    historyList.innerHTML = "";
   }
 
   function selectStation(i, autoplay = true) {
@@ -889,6 +1155,8 @@
     setTimeout(() => art.classList.remove("is-switching"), 350);
 
     current = i;
+    retryCount = 0;
+    if (retryTimer) { clearTimeout(retryTimer); retryTimer = null; }
     audio.src = s.url;
     setAccent(s.accent);
     artInit.textContent = initials(s.name);
@@ -897,6 +1165,8 @@
     nowTitle.textContent   = s.tag;
     nowArtist.textContent  = "";
     nowSub.textContent     = "En direct";
+    miniStation.textContent = s.name;
+    miniTitle.textContent   = s.tag;
     app.classList.remove("is-playing");
     stopMetaPolling();
     showLogo(s);
@@ -954,6 +1224,7 @@
       .then(() => {
         app.classList.add("is-playing");
         nowSub.textContent = "En direct";
+        retryCount = 0;
       })
       .catch(() => {
         app.classList.remove("is-playing");
@@ -963,12 +1234,52 @@
   function pause() {
     audio.pause();
     app.classList.remove("is-playing");
+    if (retryTimer) { clearTimeout(retryTimer); retryTimer = null; }
     if (current !== null) nowSub.textContent = "En pause";
   }
   function togglePlay() {
     if (!audio.src) return;
     if (audio.paused) play(); else pause();
   }
+
+  // ── Stalled / auto-retry ─────────────────────────────────────────────────────
+  function scheduleRetry() {
+    if (retryTimer) return;
+    retryCount++;
+    const delay = Math.min(3000 * retryCount, 15000);
+    nowSub.textContent = `Reconnexion dans ${Math.round(delay/1000)}s…`;
+    retryTimer = setTimeout(() => {
+      retryTimer = null;
+      if (current === null) return;
+      nowSub.textContent = "Reconnexion…";
+      audio.load();
+      audio.play().then(() => {
+        app.classList.add("is-playing");
+        nowSub.textContent = "En direct";
+        retryCount = 0;
+      }).catch(() => scheduleRetry());
+    }, delay);
+  }
+
+  audio.addEventListener("stalled", () => {
+    app.classList.remove("is-playing");
+    scheduleRetry();
+  });
+  audio.addEventListener("waiting", () => {
+    if (!audio.paused) nowSub.textContent = "Mise en mémoire…";
+  });
+  audio.addEventListener("playing", () => {
+    app.classList.add("is-playing");
+    nowSub.textContent = "En direct";
+    if (retryTimer) { clearTimeout(retryTimer); retryTimer = null; }
+    if (STATIONS[current]?.metaUrl && !metaTimer) startMetaPolling();
+  });
+  audio.addEventListener("pause", () => app.classList.remove("is-playing"));
+  audio.addEventListener("error", () => {
+    app.classList.remove("is-playing");
+    stopMetaPolling();
+    scheduleRetry();
+  });
 
   function step(dir) {
     const items = visibleStations().map(x => x.i);
@@ -1023,18 +1334,6 @@
     const st = JSON.parse(localStorage.getItem("radio.state") || "{}");
     st.volume = audio.volume;
     localStorage.setItem("radio.state", JSON.stringify(st));
-  });
-
-  audio.addEventListener("playing", () => {
-    app.classList.add("is-playing");
-    nowSub.textContent = "En direct";
-    if (STATIONS[current]?.metaUrl && !metaTimer) startMetaPolling();
-  });
-  audio.addEventListener("pause", () => app.classList.remove("is-playing"));
-  audio.addEventListener("error", () => {
-    app.classList.remove("is-playing");
-    stopMetaPolling();
-    nowSub.textContent = "Erreur de flux";
   });
 
   // Initial
