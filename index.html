@@ -630,10 +630,11 @@
 
   /* ── Now-playing cards grid ──────────────────── */
   .live-grid {
-    display: grid;
+    display: grid !important;
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     gap: 10px;
     align-content: start;
+    width: 100%;
   }
   .live-card {
     display: flex;
@@ -1362,12 +1363,12 @@
   });
 
   // Initial
-  renderList();
   requestAnimationFrame(moveIndicator);
   window.addEventListener("resize", moveIndicator);
   if (typeof saved.stationIndex === "number" && STATIONS[saved.stationIndex]) {
     selectStation(saved.stationIndex, false);
   }
+  startLiveView();
 </script>
 </body>
 </html>
