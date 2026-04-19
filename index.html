@@ -1204,7 +1204,7 @@
     app.classList.remove("is-playing");
     stopMetaPolling();
     showLogo(s);
-    renderList();
+    if (isLiveView) renderLiveGrid(); else renderList();
 
     localStorage.setItem("radio.state", JSON.stringify({ stationIndex: i, volume: audio.volume }));
     if (autoplay) play();
