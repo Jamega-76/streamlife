@@ -591,7 +591,95 @@
   }
   .history-time { font-size: 10px; color: var(--fg-faint); flex-shrink: 0; }
 
-  /* ── Mobile responsive ───────────────────────── */
+  /* ── Live view toggle button ─────────────────── */
+  .live-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1.5px solid var(--stroke);
+    background: var(--surface);
+    backdrop-filter: blur(20px);
+    font: inherit; font-size: 12px; font-weight: 600;
+    color: var(--fg-dim);
+    cursor: pointer;
+    transition: all .2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .live-toggle:hover { border-color: rgba(var(--accent-rgb), 0.5); color: var(--fg); }
+  .live-toggle.is-live {
+    background: rgba(var(--accent-rgb), 0.12);
+    border-color: rgba(var(--accent-rgb), 0.5);
+    color: rgb(var(--accent-rgb));
+  }
+  .live-toggle .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--fg-faint);
+    transition: background .2s;
+  }
+  .live-toggle.is-live .dot {
+    background: #ff3b30;
+    animation: livePulse 1.4s ease-out infinite;
+  }
+  @keyframes livePulse {
+    0%   { box-shadow: 0 0 0 0 rgba(255,59,48,0.6); }
+    100% { box-shadow: 0 0 0 6px rgba(255,59,48,0); }
+  }
+
+  /* ── Now-playing cards grid ──────────────────── */
+  .live-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
+    align-content: start;
+  }
+  .live-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px;
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    border: 1px solid var(--stroke);
+    min-width: 0;
+    cursor: pointer;
+    transition: background .15s, border-color .15s, transform .15s;
+  }
+  .live-card:hover { background: var(--surface-2); transform: translateY(-1px); border-color: rgba(var(--accent-rgb), 0.3); }
+  .live-card-cover {
+    width: 100%; aspect-ratio: 1;
+    border-radius: 9px;
+    overflow: hidden;
+    background: var(--surface-2);
+    display: grid; place-items: center;
+    position: relative;
+  }
+  .live-card-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .live-card-cover .cover-placeholder {
+    font-size: 22px; font-weight: 700; color: rgba(255,255,255,0.8);
+  }
+  .live-card-station {
+    font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: rgb(var(--accent-rgb));
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .live-card-track {
+    font-size: 12px; font-weight: 600;
+    letter-spacing: -0.01em; line-height: 1.3;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .live-card-artist {
+    font-size: 11px; color: var(--fg-dim);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .live-card-loading {
+    grid-column: 1 / -1;
+    text-align: center; padding: 40px 20px;
+    color: var(--fg-dim); font-size: 13px;
+  }
   @media (max-width: 700px) {
     body { overflow-y: auto; }
 
@@ -646,7 +734,7 @@
   <!-- LEFT : Now playing -->
   <aside class="now">
     <div class="brand">
-      <div class="brand-mark"><span class="orb"></span><span>Radio</span></div>
+      <div class="brand-mark"><span class="orb"></span><span>Stream Life</span></div>
       <button class="theme-toggle" id="themeBtn" aria-label="Changer de thème">
         <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
           <circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
@@ -718,6 +806,10 @@
         <button data-filter="Europe 2">Europe 2</button>
         <button data-filter="RFM">RFM</button>
       </div>
+      <button class="live-toggle" id="liveToggle" aria-pressed="false">
+        <span class="dot"></span>
+        Live
+      </button>
       <div class="search">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
@@ -836,6 +928,77 @@
   const historyPanel  = document.getElementById("historyPanel");
   const historyList   = document.getElementById("historyList");
   const library       = document.querySelector(".library");
+  const liveToggle    = document.getElementById("liveToggle");
+
+  // ── Live view ────────────────────────────────────────────────────────────────
+  let isLiveView = false;
+  let liveTimer  = null;
+  let liveData   = {}; // { stationIndex: { title, artist, imageUrl } }
+
+  async function fetchAllMeta() {
+    const stations = visibleStations();
+    // Fetch in parallel, max 10 at a time to avoid hammering
+    const chunks = [];
+    for (let i = 0; i < stations.length; i += 10) chunks.push(stations.slice(i, i + 10));
+    for (const chunk of chunks) {
+      await Promise.allSettled(chunk.map(async ({ s, i }) => {
+        if (!s.metaUrl) return;
+        try {
+          const data = await fetch(s.metaUrl).then(r => r.json());
+          const all  = data.nowplaying || [];
+          const np   = all.find(t => t.status === "playing") || all[0];
+          if (np) liveData[i] = { title: np.title || "", artist: np.artist || "", imageUrl: np.imageUrl || "", accent: s.accent };
+        } catch {}
+      }));
+    }
+    renderLiveGrid();
+  }
+
+  function renderLiveGrid() {
+    const items = visibleStations();
+    list.innerHTML = `<div class="live-grid">${
+      items.map(({ s, i }) => {
+        const d = liveData[i] || {};
+        const grad = `linear-gradient(135deg, rgb(${s.accent}), rgba(${s.accent},0.5))`;
+        const coverHtml = d.imageUrl
+          ? `<img src="${escapeHtml(d.imageUrl)}" alt="" loading="lazy" onerror="this.style.display='none'" />`
+          : `<div class="cover-placeholder" style="background:${grad};width:100%;height:100%;display:grid;place-items:center;">${initials(s.name)}</div>`;
+        return `
+          <div class="live-card" data-i="${i}">
+            <div class="live-card-cover">${coverHtml}</div>
+            <div class="live-card-station">${escapeHtml(s.name)}</div>
+            <div class="live-card-track">${escapeHtml(d.title || '—')}</div>
+            <div class="live-card-artist">${escapeHtml(d.artist || '')}</div>
+          </div>`;
+      }).join("")
+    }</div>`;
+
+    // Click on live card → select station
+    list.querySelectorAll(".live-card").forEach(card => {
+      card.addEventListener("click", () => selectStation(Number(card.dataset.i), true));
+    });
+  }
+
+  function startLiveView() {
+    isLiveView = true;
+    liveToggle.classList.add("is-live");
+    liveToggle.setAttribute("aria-pressed", "true");
+    list.innerHTML = `<div class="live-grid"><div class="live-card-loading">Chargement des titres en cours…</div></div>`;
+    fetchAllMeta();
+    liveTimer = setInterval(fetchAllMeta, 30000);
+  }
+
+  function stopLiveView() {
+    isLiveView = false;
+    liveToggle.classList.remove("is-live");
+    liveToggle.setAttribute("aria-pressed", "false");
+    if (liveTimer) { clearInterval(liveTimer); liveTimer = null; }
+    renderList();
+  }
+
+  liveToggle.addEventListener("click", () => {
+    if (isLiveView) stopLiveView(); else startLiveView();
+  });
 
   // Build waveform bars
   wave.innerHTML = Array.from({length: BARS}, () => "<span></span>").join("");
@@ -1188,7 +1351,7 @@
     tabs.querySelectorAll("button").forEach(b => b.classList.toggle("is-active", b === btn));
     currentFilter = btn.dataset.filter;
     moveIndicator();
-    renderList();
+    if (isLiveView) { liveData = {}; startLiveView(); } else renderList();
   });
 
   volInput.addEventListener("input", () => {
