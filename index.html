@@ -595,8 +595,7 @@
   .live-toggle {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
+    padding: 6px 14px;
     border-radius: 20px;
     border: 1.5px solid var(--stroke);
     background: var(--surface);
@@ -607,25 +606,14 @@
     transition: all .2s;
     white-space: nowrap;
     flex-shrink: 0;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
   }
   .live-toggle:hover { border-color: rgba(var(--accent-rgb), 0.5); color: var(--fg); }
   .live-toggle.is-live {
     background: rgba(var(--accent-rgb), 0.12);
     border-color: rgba(var(--accent-rgb), 0.5);
     color: rgb(var(--accent-rgb));
-  }
-  .live-toggle .dot {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: var(--fg-faint);
-    transition: background .2s;
-  }
-  .live-toggle.is-live .dot {
-    background: #ff3b30;
-    animation: livePulse 1.4s ease-out infinite;
-  }
-  @keyframes livePulse {
-    0%   { box-shadow: 0 0 0 0 rgba(255,59,48,0.6); }
-    100% { box-shadow: 0 0 0 6px rgba(255,59,48,0); }
   }
 
   /* ── Now-playing cards grid ──────────────────── */
@@ -808,8 +796,7 @@
         <button data-filter="RFM">RFM</button>
       </div>
       <button class="live-toggle" id="liveToggle" aria-pressed="false">
-        <span class="dot"></span>
-        Live
+        Vue logos radios
       </button>
       <div class="search">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -996,7 +983,13 @@
   }
 
   liveToggle.addEventListener("click", () => {
-    if (isLiveView) stopLiveView(); else startLiveView();
+    if (isLiveView) {
+      stopLiveView();
+      liveToggle.textContent = "Vue logos radios";
+    } else {
+      startLiveView();
+      liveToggle.textContent = "Vue titres en cours";
+    }
   });
 
   // Build waveform bars
@@ -1367,6 +1360,7 @@
     selectStation(saved.stationIndex, false);
   }
   startLiveView();
+  liveToggle.textContent = "Vue logos radios";
 </script>
 </body>
 </html>
